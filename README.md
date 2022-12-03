@@ -15,6 +15,7 @@ Szymon Kaczmarek 148056
 
 # Broker functionalities
 
+- read and parse ``broker.conf`` config file
 - receive messages on a given topic
 - insert message to a topic queue
 - register new clients
