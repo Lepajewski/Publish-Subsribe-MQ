@@ -8,9 +8,10 @@ Multiple clients can subscribe the same topic and receive the same message.
 Multiple clients can publish on the same topic.
 
 ## Authors
-Project was created for subject Computer Networks part 2.
+Project was created for subject Computer Networks #2.
 
 Szymon Kaczmarek 148056
+
 Łukasz Kania 148077
 
 # Broker functionalities
@@ -27,7 +28,7 @@ Szymon Kaczmarek 148056
 
 ## Broker configuration
 
-Broker can be adjusted in **config.h** file.
+Broker can be adjusted in ``broker.conf`` file.
 Inside, listener port and ip can be configured.
 
 To Be Announced...
