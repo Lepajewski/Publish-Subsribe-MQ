@@ -6,16 +6,22 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <vector>
+#include <algorithm>
+#include <thread>
 
 #include "read_config.h"
 #include "setup_socket.h"
-#include "broker_signal.h"
+#include "broker_utils.h"
+#include "client.h"
 
 
 int broker_sock = -1;
-int client_sock = -1;
+std::vector<int> client_sockets;
 
-void signal_handler(int signum);
+
+static void signal_handler(int signum);
+static void client_thread(std::vector<Client*> clients, Client *c);
 
 
 int main(int argc, char **argv) {
@@ -36,6 +42,9 @@ int main(int argc, char **argv) {
 	printf("Opening ipv4 listen socket on: %s:%u\n", saddr, (uint16_t) ((cfg.port>>8) | (cfg.port<<8)));
 	printf("max clients: %u\n", cfg.max_clients);
 
+	// init clients
+	std::vector<Client*> clients;
+
 	// open broker socket
 	broker_sock = setup_socket(&cfg);
 	if (broker_sock == -1) {
@@ -53,45 +62,71 @@ int main(int argc, char **argv) {
 	while (true) {
 		sockaddr_in client_addr{};
 		socklen_t client_addr_size = sizeof(client_addr);
-		client_sock = accept(broker_sock, (sockaddr*) &client_addr, &client_addr_size);
+		int client_sock = accept(broker_sock, (sockaddr*) &client_addr, &client_addr_size);
+		client_sockets.push_back(client_sock);
 
 		if (client_sock == -1) {
 			perror("Client accept failed");
 			return -1;
 		}
 
+		// register new client
+		int id = get_new_id(clients);
+		Client *c = new Client(id, client_sock, 60.0, client_addr);
+		clients.push_back(c);
+
 		if (cfg.verbose) {
-			printf("New connection from %s:%hu\n", inet_ntoa(client_addr.sin_addr), ntohs(client_addr.sin_port));
+			print_clients(clients);
+			printf("New connection from %s:%hu as %d\n", 
+					inet_ntoa(client_addr.sin_addr),
+					ntohs(client_addr.sin_port), 
+					c->getId());
 		}
 
 		// start thread on new client
+		std::thread new_client_thread(client_thread, clients, c);
 
-		while (true) {
-			char data[11]{};
-			int len = read(client_sock, data, sizeof(data)-1);
-
-			if (len < 1) break;
-
-			printf("Received %2d bytes: |%s|\n", len, data);
-		}
-		close(client_sock);
-		printf("Connection closed\n");
+		new_client_thread.detach();
 	}
 	
-	// close socket descriptors 
+	// close socket descriptors
 	close(broker_sock);
-	shutdown(client_sock, SHUT_RDWR);
-	close(client_sock);
+	// shutdown(client_sock, SHUT_RDWR);
+	// close(client_sock);
 
 	return 0;
 }
 
-void signal_handler(int signum) {
+static void signal_handler(int signum) {
 	printf("Keyboard Interrupt ...closing socket\n");
 
 	close(broker_sock);
-	shutdown(client_sock, SHUT_RDWR);
-	close(client_sock);
-
+	for (auto it : client_sockets) {
+		shutdown(it, SHUT_RDWR);
+		close(it);
+	}
 	exit(signum);
+}
+
+static void client_thread(std::vector<Client*> clients, Client *c) {
+	while (true) {
+		char data[100]{};
+		int len = read(c->getSockFd(), data, sizeof(data)-1);
+
+		if (len < 1) break;
+
+		printf("Received %2d bytes: %s\n", len, data);
+	}
+
+	close(c->getSockFd());
+
+	printf("Client disconnected: %s:%hu, id: %d\n", 
+			inet_ntoa(c->getAddrInfo().sin_addr),
+			ntohs(c->getAddrInfo().sin_port), 
+			c->getId());
+
+
+	// here will be semaphore take
+	clients.erase(std::remove(clients.begin(), clients.end(), c), clients.end());
+	// here will be semaphore release
 }
