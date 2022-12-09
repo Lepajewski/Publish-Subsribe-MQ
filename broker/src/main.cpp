@@ -16,12 +16,13 @@
 #include "client.h"
 
 
+// global socket descriptors (for signal handling)
 int broker_sock = -1;
 std::vector<int> client_sockets;
 
 
 static void signal_handler(int signum);
-static void client_thread(std::vector<Client*> clients, Client *c);
+static void client_thread(std::vector<Client*> *clients, Client *c);
 
 
 int main(int argc, char **argv) {
@@ -60,6 +61,7 @@ int main(int argc, char **argv) {
 
 	// main broker loop
 	while (true) {
+		// registering new client should be mutually exclusive
 		sockaddr_in client_addr{};
 		socklen_t client_addr_size = sizeof(client_addr);
 		int client_sock = accept(broker_sock, (sockaddr*) &client_addr, &client_addr_size);
@@ -71,6 +73,7 @@ int main(int argc, char **argv) {
 		}
 
 		// register new client
+		// to fix: two clients must not have same id
 		int id = get_new_id(clients);
 		Client *c = new Client(id, client_sock, 60.0, client_addr);
 		clients.push_back(c);
@@ -84,15 +87,13 @@ int main(int argc, char **argv) {
 		}
 
 		// start thread on new client
-		std::thread new_client_thread(client_thread, clients, c);
+		std::thread new_client_thread(client_thread, &clients, c);
 
 		new_client_thread.detach();
 	}
 	
 	// close socket descriptors
 	close(broker_sock);
-	// shutdown(client_sock, SHUT_RDWR);
-	// close(client_sock);
 
 	return 0;
 }
@@ -108,7 +109,8 @@ static void signal_handler(int signum) {
 	exit(signum);
 }
 
-static void client_thread(std::vector<Client*> clients, Client *c) {
+static void client_thread(std::vector<Client*> *clients, Client *c) {
+	// main client loop
 	while (true) {
 		char data[100]{};
 		int len = read(c->getSockFd(), data, sizeof(data)-1);
@@ -127,6 +129,6 @@ static void client_thread(std::vector<Client*> clients, Client *c) {
 
 
 	// here will be semaphore take
-	clients.erase(std::remove(clients.begin(), clients.end(), c), clients.end());
+	clients->erase(std::remove(clients->begin(), clients->end(), c), clients->end());
 	// here will be semaphore release
 }
