@@ -6,15 +6,13 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
-
 enum config_status {
-    SUCCESS,
-    FILE_NOT_FOUND,
-    UNKNOWN_PARAM,
-    ADDRESS_INVALID,
-    PORT_INVALID,
-    VERBOSITY_INVALID,
-    MAX_CLIENTS_INVALID,
+    NOTHING_GIVEN = 0,
+    ADDRESS_GIVEN = 1,
+    PORT_GIVEN = 2,
+    VERBOSITY_GIVEN = 4,
+    MAX_CLIENTS_GIVEN = 8,
+    FILE_NOT_OPENABLE = 16
 };
 
 typedef struct Config {

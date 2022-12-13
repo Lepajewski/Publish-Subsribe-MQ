@@ -1,6 +1,5 @@
 #include "setup_socket.h"
 
-
 int setup_socket(Config *cfg) {
     sockaddr_in addr = {};
 	addr.sin_family = AF_INET;

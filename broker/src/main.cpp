@@ -27,7 +27,7 @@ static void client_thread(std::vector<Client*> *clients, Client *c);
 
 int main(int argc, char **argv) {
 	if (argc < 2) {
-		perror("No config file passed");
+		fprintf(stderr, "No config file passed");
 		return -1;
 	}
 
@@ -36,12 +36,12 @@ int main(int argc, char **argv) {
 
 	// load config
 	Config cfg = parse_config(argv[1]);
-	printf("Config loaded from: %s\n", argv[1]);
+	printf("Config loaded\n");
 
-	char saddr[INET_ADDRSTRLEN];
-	inet_ntop(AF_INET, &cfg.address, saddr, INET_ADDRSTRLEN);
-	printf("Opening ipv4 listen socket on: %s:%u\n", saddr, (uint16_t) ((cfg.port>>8) | (cfg.port<<8)));
-	printf("max clients: %u\n", cfg.max_clients);
+	char s_addr[INET_ADDRSTRLEN];
+	inet_ntop(AF_INET, &cfg.address, s_addr, INET_ADDRSTRLEN);
+	printf("Opening ipv4 listen socket on: %s:%u\n", s_addr, ntohs(cfg.port));
+	printf("Max clients: %u\n", cfg.max_clients);
 
 	// init clients
 	std::vector<Client*> clients;
@@ -49,7 +49,7 @@ int main(int argc, char **argv) {
 	// open broker socket
 	broker_sock = setup_socket(&cfg);
 	if (broker_sock == -1) {
-		perror("Socket setup failed");
+		fprintf(stderr, "Socket setup failed");
 		return -1;
 	}
 
@@ -60,17 +60,19 @@ int main(int argc, char **argv) {
 	}
 
 	// main broker loop
-	while (true) {
+	bool should_close = false;
+	while (!should_close) {
 		// registering new client should be mutually exclusive
 		sockaddr_in client_addr{};
 		socklen_t client_addr_size = sizeof(client_addr);
-		int client_sock = accept(broker_sock, (sockaddr*) &client_addr, &client_addr_size);
-		client_sockets.push_back(client_sock);
 
+		int client_sock = accept(broker_sock, (sockaddr*) &client_addr, &client_addr_size);
 		if (client_sock == -1) {
 			perror("Client accept failed");
 			return -1;
 		}
+
+		client_sockets.push_back(client_sock);
 
 		// register new client
 		// to fix: two clients must not have same id
@@ -99,7 +101,7 @@ int main(int argc, char **argv) {
 }
 
 static void signal_handler(int signum) {
-	printf("Keyboard Interrupt ...closing socket\n");
+	printf("\nKeyboard Interrupt ...closing socket\n");
 
 	close(broker_sock);
 	for (auto it : client_sockets) {
