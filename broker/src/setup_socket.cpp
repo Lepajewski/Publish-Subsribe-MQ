@@ -6,7 +6,7 @@ int setup_socket(Config *cfg) {
 	addr.sin_addr.s_addr = cfg->address.s_addr;
 	addr.sin_port = cfg->port;
 
-	int fd = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
+	int fd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 	if (fd == -1) {
 		perror("Socket init failed");
 		return -1;
