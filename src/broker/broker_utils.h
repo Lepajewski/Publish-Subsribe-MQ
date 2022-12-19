@@ -12,7 +12,7 @@ enum broker_signals {
     PING,                   // ping signal
     SUBACK,                 // topic subscribed acknowlegdement
     PUBACK,                 // message published acknowlegdement
-    MESRCVSACK,             // message received acknowlegdement
+    NEWMESACK,              // new message acknowlegdement
     UNSUBACK,               // client unsubscribed topic acknowlegdement
     DISCONNACK,             // client disconnected acknowlegdement
 };

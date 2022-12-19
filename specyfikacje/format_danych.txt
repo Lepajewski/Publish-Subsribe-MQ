@@ -1,0 +1,59 @@
+kolejność danych w przesyłanych danych:
+1. nr sygnału (enum sygnałów z brokera)
+    sygnały:
+
+    - connack od klienta
+        broker czekuje czy już istnieje połączenie od danego ip:port
+    - connack od brokera
+        2. wygenerowane id klienta
+        3. znak (char)03 [End of text character sprawdzić czy działa bo może się wywalić]
+
+    - ping od brokera i klienta
+        pusta wiadomość budząca
+
+    - suback od klienta
+        2. długość nazwy topicu
+        3. znak (char)59 [ ; ]
+        4. nazwa topicu
+    - suback od brokera
+        2. kod powodzenia subskrybcji (jakieś 0 lub 1 czy coś)
+        dla każdej wiadomości w topicu {
+            3. znak (char)59 [ ; ]
+            4. id wiadomości
+            5. znak (char)59 [ ; ]
+            6. długość wiadomości
+            7. znak (char)59 [ ; ]
+            8. wiadomość
+        }
+        9. znak (char)03 [End of text character sprawdzić czy działa bo może się wywalić]
+
+    - puback od brokera
+        2. id wiadomości
+        3. znak (char)03 [End of text character sprawdzić czy działa bo może się wywalić]
+    - puback od klienta
+        2. długość nazwy topicu
+        3. znak (char)59 [ ; ]
+        4. nazwa topicu
+        5. długość wiadomości
+        6. znak (char)59 [ ; ]
+        7. wiadomość
+    
+    - newmesack od brokera
+        2. id wiadomości
+        3. znak (char)59 [ ; ]
+        4. długość nazwy topicu
+        5. znak (char)59 [ ; ]
+        6. nazwa topicu
+        7. długość wiadomości
+        8. znak (char)59 [ ; ]
+        9. wiadomość
+
+    - unsuback od klienta
+        2. długość nazwy topicu
+        3. znak (char)59 [ ; ]
+        4. nazwa topicu
+    - unsuback od brokera
+        2. kod powodzenia desubskrybcji (jakieś 0 lub 1 czy coś)
+
+    - disconnack od klienta
+        pusty sygnał
