@@ -11,9 +11,11 @@
 #include <thread>
 
 #include "../utils/config_parser.h"
+#include "../utils/signal_code.h"
 #include "setup_socket.h"
 #include "broker_utils.h"
 #include "client.h"
+#include "signal_handler.h"
 
 
 // global socket descriptors (for signal handling)
@@ -112,14 +114,24 @@ static void signal_handler(int signum) {
 }
 
 static void client_thread(std::vector<Client*> *clients, Client *c) {
+	bool should_close = false;
+	
+	if (read_connack(c->getSockFd()) != 0) {
+		fprintf(stderr, "No connection acknowlegment from client\n");
+		should_close = true;
+	}
+	else {
+		send_connack(c->getSockFd(), c->getId());
+	}
+
 	// main client loop
-	while (true) {
-		char data[100]{};
-		int len = read(c->getSockFd(), data, sizeof(data)-1);
+	char data_in[100]{};
+	while (!should_close) {
+		int len = read(c->getSockFd(), data_in, sizeof(data_in)-1);
 
 		if (len < 1) break;
 
-		printf("Received %2d bytes: %s\n", len, data);
+		printf("Received %2d bytes: %s\n", len, data_in);
 	}
 
 	close(c->getSockFd());

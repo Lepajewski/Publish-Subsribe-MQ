@@ -4,8 +4,11 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <unistd.h>
+#include <iostream>
 
 #include "../utils/config_parser.h"
+#include "../utils/signal_code.h"
+#include "signal_handler.h"
 
 int main(int argc, char** argv) {
     if (argc < 2) {
@@ -32,7 +35,16 @@ int main(int argc, char** argv) {
         return -1;
     }
 
-    write(sock_fd, "Hello world!", 12);
+    send_connack(sock_fd);
+    int id;
+    if (read_connack(sock_fd, id) != 0) {
+        fprintf(stderr, "No connect acknowlegment from broker.\n");
+        shutdown(sock_fd, SHUT_RDWR);
+        close(sock_fd);
+        return -1;
+    }
+
+    printf("Connected with id: %d\n", id);
 
     shutdown(sock_fd, SHUT_RDWR);
     close(sock_fd);
