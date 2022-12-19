@@ -4,7 +4,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-#include "read_config.h"
+#include "../utils/config_parser.h"
 
 
 int setup_socket(Config *cfg);

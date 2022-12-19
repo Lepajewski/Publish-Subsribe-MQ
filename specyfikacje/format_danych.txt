@@ -38,7 +38,7 @@ kolejność danych w przesyłanych danych:
         6. znak (char)59 [ ; ]
         7. wiadomość
     
-    - newmesack od brokera
+    - newmes od brokera
         2. id wiadomości
         3. znak (char)59 [ ; ]
         4. długość nazwy topicu

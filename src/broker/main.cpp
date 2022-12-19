@@ -10,7 +10,7 @@
 #include <algorithm>
 #include <thread>
 
-#include "read_config.h"
+#include "../utils/config_parser.h"
 #include "setup_socket.h"
 #include "broker_utils.h"
 #include "client.h"
@@ -25,7 +25,7 @@ static void signal_handler(int signum);
 static void client_thread(std::vector<Client*> *clients, Client *c);
 
 
-int main(int argc, char **argv) {
+int main(int argc, char** argv) {
 	if (argc < 2) {
 		fprintf(stderr, "No config file passed");
 		return -1;
