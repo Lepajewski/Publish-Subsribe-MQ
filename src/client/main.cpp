@@ -16,12 +16,15 @@
 #include "user_input.h"
 
 int id;
+int sock_fd;
 std::vector<Topic> subscribed_topics;
 std::string last_error;
 std::string clear_line;
 
 void print_menu();
 void print_and_get_input(int& action, std::string& argument);
+
+void sub_to_topic(std::string name);
 
 int main(int argc, char** argv) {
     if (argc < 2) {
@@ -36,7 +39,7 @@ int main(int argc, char** argv) {
     Config cfg = parse_config(argv[1]);
     printf("Config loaded\n");
 
-    int sock_fd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    sock_fd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     if (sock_fd == -1) {
         perror("Socket init failed");
         return -1;
@@ -76,7 +79,7 @@ int main(int argc, char** argv) {
 
         switch (action) {
             case 1:
-                last_error = "Not implemented";
+                sub_to_topic(argument);
                 break;
 
             case 2:
@@ -121,17 +124,29 @@ void print_menu() {
 }
 
 void print_and_get_input(int& action, std::string& argument) {
-        printf("\n%s\r", clear_line.c_str());
-        printf("\x1b[31m%s\x1b[0m\n", last_error.c_str());
-        //set font color to red; print error; unset font style; newline
-        last_error.clear();
+    printf("\n%s\r", clear_line.c_str());
+    printf("\x1b[31m%s\x1b[0m\n", last_error.c_str());
+    //set font color to red; print error; unset font style; newline
+    last_error.clear();
 
-        std::string command;
-        std::getline(std::cin, command);
-        printf("%s\r", clear_line.c_str());
-        printf("%s", command.c_str());
-        printf("\x1b[1A\r%s\x1b[2A\r", clear_line.c_str());
-        //go up one line; go to the begining of line; print clear; go up 2 lines; go to the begining of line
+    std::string command;
+    std::getline(std::cin, command);
+    printf("%s\r", clear_line.c_str());
+    printf("%s", command.c_str());
+    printf("\x1b[1A\r%s\x1b[2A\r", clear_line.c_str());
+    //go up one line; go to the begining of line; print clear; go up 2 lines; go to the begining of line
 
-        parse_input(command, action, argument);
+    parse_input(command, action, argument);
+}
+
+void sub_to_topic(std::string name) {
+    if (name == "") {
+        last_error = "No topic name given in agrument";
+        return;
+    }
+    if (check_if_topic_is_in_list(subscribed_topics, name)) {
+        last_error = "Topic already subscribed";
+        return;
+    }
+    send_suback(sock_fd, name);
 }

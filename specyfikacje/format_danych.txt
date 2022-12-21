@@ -5,55 +5,43 @@ kolejność danych w przesyłanych danych:
     - connack od klienta
         broker czekuje czy już istnieje połączenie od danego ip:port
     - connack od brokera
-        2. wygenerowane id klienta
-        3. znak (char)03 [End of text character sprawdzić czy działa bo może się wywalić]
+        2. wygenerowane id klienta                                  (int)
 
     - ping od brokera i klienta
         pusta wiadomość budząca
 
     - suback od klienta
-        2. długość nazwy topicu
-        3. znak (char)59 [ ; ]
-        4. nazwa topicu
+        2. długość nazwy topicu                                     (size_t)
+        3. nazwa topicu
     - suback od brokera
-        2. kod powodzenia subskrybcji (jakieś 0 lub 1 czy coś)
+        2. kod powodzenia subskrybcji (jakieś 0 lub 1 czy coś)      (int)
         dla każdej wiadomości w topicu {
-            3. znak (char)59 [ ; ]
-            4. id wiadomości
-            5. znak (char)59 [ ; ]
-            6. długość wiadomości
-            7. znak (char)59 [ ; ]
+            4. id wiadomości                                        (int)
+            6. długość wiadomości                                   (size_t)
             8. wiadomość
         }
-        9. znak (char)03 [End of text character sprawdzić czy działa bo może się wywalić]
+        9. znak (char)03                                            (char)
 
     - puback od brokera
-        2. id wiadomości
-        3. znak (char)03 [End of text character sprawdzić czy działa bo może się wywalić]
+        2. id wiadomości                                            (int)
     - puback od klienta
-        2. długość nazwy topicu
-        3. znak (char)59 [ ; ]
+        2. długość nazwy topicu                                     (size_t)
         4. nazwa topicu
-        5. długość wiadomości
-        6. znak (char)59 [ ; ]
+        5. długość wiadomości                                       (size_t)
         7. wiadomość
     
     - newmes od brokera
-        2. id wiadomości
-        3. znak (char)59 [ ; ]
-        4. długość nazwy topicu
-        5. znak (char)59 [ ; ]
+        2. id wiadomości                                            (int)
+        4. długość nazwy topicu                                     (size_t)
         6. nazwa topicu
-        7. długość wiadomości
-        8. znak (char)59 [ ; ]
+        7. długość wiadomości                                       (size_t)
         9. wiadomość
 
     - unsuback od klienta
-        2. długość nazwy topicu
-        3. znak (char)59 [ ; ]
+        2. długość nazwy topicu                                     (size_t)
         4. nazwa topicu
     - unsuback od brokera
-        2. kod powodzenia desubskrybcji (jakieś 0 lub 1 czy coś)
+        2. kod powodzenia desubskrybcji (jakieś 0 lub 1 czy coś)    (int)
 
     - disconnack od klienta
         pusty sygnał

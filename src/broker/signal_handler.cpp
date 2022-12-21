@@ -1,13 +1,9 @@
 #include "signal_handler.h"
 
 void send_connack(int fd, int id) {
-    const int BUFF_SIZE = 100;
-    char buf[BUFF_SIZE]{};
-    int len = 0;
-    buf[len++] = signal_code_to_char(CONNACK);
-	len += sprintf(&buf[1], "%d", id);
-	buf[len++] = (char)3;
-	write(fd, buf, len);
+    char code = signal_code_to_char(CONNACK);
+    write(fd, &code, 1);
+	write(fd, &id, sizeof(id));
 }
 
 int read_connack(int fd) {
