@@ -1,0 +1,22 @@
+# WYGLĄD
+> witaj
+> [nazwy zasubskrybowanych topiców]
+> akcje
+> najnowszy błąd z wejścia urzytkownika
+> {wejscie urzytkownika}
+> {poprzednie wejscie urzytkownika}
+
+# WEJŚCIE URZYTKOWNIKA
+komenda w formacie:
+id_akcji znak_odstepu argumenty
+ [int]                [string]
+
+znak_odstepu jest ignorowany
+
+# AKCJE
+1. Subskrybuj (argumenty[1]: nazwa topicu)
+2. Otwórz (argumenty[1]: nazwa topicu)
+    1. Napisz wiadomość (argumenty[1]: treść)
+    2. Wyjdź (argumenty[0]: )
+3. Odsubskrybuj (argumenty[1]: nazwa topicu)
+4. Wyjdź (argumenty[0]: )

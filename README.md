@@ -35,7 +35,6 @@ To Be Announced...
 
 # Client functionalities
 
-- optional user given id
 - connect to a broker
 - subscribe multiple topics
 - publish message on given topic
