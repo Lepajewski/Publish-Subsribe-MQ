@@ -15,6 +15,7 @@ public:
     void add_message(Message message);
     std::string get_name();
     void print_messages();
+    int get_messages_lenght();
 };
 
 #endif

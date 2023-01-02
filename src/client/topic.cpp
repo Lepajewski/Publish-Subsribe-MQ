@@ -18,3 +18,7 @@ void Topic::print_messages() {
         printf("\n");
     }
 }
+
+int Topic::get_messages_lenght() {
+    return this->messages.size();
+}

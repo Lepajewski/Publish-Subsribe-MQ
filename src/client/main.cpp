@@ -30,6 +30,7 @@ void print_chat(Topic topic);
 
 void sub_to_topic(std::string name);
 void open_topic(std::string name);
+void send_message(Topic topic, std::string message);
 
 void load_sample_data();
 
@@ -189,7 +190,7 @@ void open_topic(std::string name) {
         print_and_get_input(action, argument);
         switch (action) {
             case 1:
-                send_puback(sock_fd, topic.get_name(), argument);
+                send_message(topic, argument);
                 break;
 
             case 2:
@@ -201,6 +202,14 @@ void open_topic(std::string name) {
                 break;
         }
     }
+}
+
+void send_message(Topic topic, std::string message) {
+    if (message == "") {
+        last_error = "No message given";
+        return;
+    }
+    send_puback(sock_fd, topic.get_name(), message);
 }
 
 void load_sample_data() {
