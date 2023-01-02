@@ -15,5 +15,6 @@ std::string Topic::get_name() {
 void Topic::print_messages() {
     for (Message msg : this->messages) {
         msg.print_self();
+        printf("\n");
     }
 }

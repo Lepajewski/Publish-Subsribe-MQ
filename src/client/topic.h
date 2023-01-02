@@ -4,6 +4,7 @@
 #include "message.h"
 #include <vector>
 #include <string>
+#include <stdio.h>
 
 class Topic {
 private:

@@ -6,5 +6,5 @@ Message::Message(int id, std::string content) {
 }
 
 void Message::print_self() {
-    printf("%d : %s\n", this->id, this->content.c_str());
+    printf("%d : %s", this->id, this->content.c_str());
 }

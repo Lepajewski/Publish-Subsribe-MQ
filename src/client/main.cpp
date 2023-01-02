@@ -8,23 +8,30 @@
 #include <vector>
 #include <string>
 #include <sys/ioctl.h>
+#include <unordered_set>
 
 #include "../utils/config_parser.h"
 #include "../utils/signal_code.h"
 #include "signal_handler.h"
 #include "topic.h"
 #include "user_input.h"
+#include "random_helper.h"
 
 int id;
 int sock_fd;
 std::vector<Topic> subscribed_topics;
 std::string last_error;
 std::string clear_line;
+std::unordered_set<std::string> awaiting_topics;
 
 void print_menu();
 void print_and_get_input(int& action, std::string& argument);
+void print_chat(Topic topic);
 
 void sub_to_topic(std::string name);
+void open_topic(std::string name);
+
+void load_sample_data();
 
 int main(int argc, char** argv) {
     if (argc < 2) {
@@ -63,6 +70,8 @@ int main(int argc, char** argv) {
         return -1;
     }
 
+    load_sample_data();
+
     bool should_close = false;
     bool first_frame = true;
     system("clear");
@@ -83,7 +92,7 @@ int main(int argc, char** argv) {
                 break;
 
             case 2:
-                last_error = "Not implemented";
+                open_topic(argument);
                 break;
 
             case 3:
@@ -125,18 +134,25 @@ void print_menu() {
 
 void print_and_get_input(int& action, std::string& argument) {
     printf("\n%s\r", clear_line.c_str());
-    printf("\x1b[31m%s\x1b[0m\n", last_error.c_str());
     //set font color to red; print error; unset font style; newline
+    printf("\x1b[31m%s\x1b[0m\n", last_error.c_str());
     last_error.clear();
 
     std::string command;
     std::getline(std::cin, command);
     printf("%s\r", clear_line.c_str());
     printf("%s", command.c_str());
-    printf("\x1b[1A\r%s\x1b[2A\r", clear_line.c_str());
     //go up one line; go to the begining of line; print clear; go up 2 lines; go to the begining of line
+    printf("\x1b[1A\r%s\x1b[2A\r", clear_line.c_str());
 
     parse_input(command, action, argument);
+}
+
+void print_chat(Topic topic) {
+    printf("Opened topic: %s\n", topic.get_name().c_str());
+    topic.print_messages();
+    printf("\n1. Write message\n");
+    printf("2. Back to menu\n");
 }
 
 void sub_to_topic(std::string name) {
@@ -149,4 +165,45 @@ void sub_to_topic(std::string name) {
         return;
     }
     send_suback(sock_fd, name);
+    awaiting_topics.insert(name);
+}
+
+void open_topic(std::string name) {
+    int index = get_topic_index(subscribed_topics, name);
+    if (index == -1) {
+        last_error = "Topic is not in your subscribtion list";
+        return;
+    }
+    if (index == -2) {
+        last_error = "More than one topic contain given name as prefix";
+        return;
+    }
+    Topic topic = subscribed_topics[index];
+    bool should_close = false;
+    system("clear");
+    print_chat(topic);
+    int action;
+    std::string argument;
+    while (!should_close) {
+        print_and_get_input(action, argument);
+        switch (action) {
+            case 1:
+                last_error = "Not implemented";
+                break;
+
+            case 2:
+                last_error = "Not implemented";
+                break;
+
+            default:
+                last_error = "Not a valid command";
+                break;
+        }
+    }
+}
+
+void load_sample_data() {
+    for (int i = 0; i < 3; i++) {
+        subscribed_topics.push_back(get_random_topic(20));
+    }
 }
