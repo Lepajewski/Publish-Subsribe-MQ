@@ -22,7 +22,8 @@ int sock_fd;
 std::vector<Topic> subscribed_topics;
 std::string last_error;
 std::string clear_line;
-std::unordered_set<std::string> awaiting_topics;
+std::unordered_set<std::string> sub_awaiting_topics;
+std::unordered_set<std::string> unsub_awaiting_topics;
 
 void print_menu();
 void print_and_get_input(int& action, std::string& argument);
@@ -31,6 +32,7 @@ void print_chat(Topic topic);
 void sub_to_topic(std::string name);
 void open_topic(std::string name);
 void send_message(Topic topic, std::string message);
+void unsub_from_topic(std::string name);
 
 void load_sample_data();
 
@@ -98,7 +100,7 @@ int main(int argc, char** argv) {
                 break;
 
             case 3:
-                last_error = "Not implemented";
+                unsub_from_topic(argument);
                 break;
 
             case 4:
@@ -167,7 +169,7 @@ void sub_to_topic(std::string name) {
         return;
     }
     send_suback(sock_fd, name);
-    awaiting_topics.insert(name);
+    sub_awaiting_topics.insert(name);
 }
 
 void open_topic(std::string name) {
@@ -210,6 +212,25 @@ void send_message(Topic topic, std::string message) {
         return;
     }
     send_puback(sock_fd, topic.get_name(), message);
+}
+
+void unsub_from_topic(std::string name) {
+    if (name == "") {
+        last_error = "No topic name given";
+        return;
+    }
+    int index = get_topic_index(subscribed_topics, name);
+    if (index == -1) {
+        last_error = "Topic is not in your subscribtion list";
+        return;
+    }
+    if (index == -2) {
+        last_error = "More than one topic contain given name as prefix";
+        return;
+    }
+    Topic topic = subscribed_topics[index];
+    send_unsuback(sock_fd, topic.get_name());
+    unsub_awaiting_topics.insert(topic.get_name());
 }
 
 void load_sample_data() {

@@ -14,4 +14,6 @@ void send_suback(int fd, std::string name);
 
 void send_puback(int fd, std::string topic_name, std::string message);
 
+void send_unsuback(int fd, std::string topic_name);
+
 #endif
