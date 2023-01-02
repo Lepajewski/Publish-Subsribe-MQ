@@ -74,10 +74,10 @@ int main(int argc, char** argv) {
 
     bool should_close = false;
     bool first_frame = true;
-    system("clear");
     while (!should_close) {
 
         if (first_frame) {
+            system("clear");
             print_menu();
             first_frame = false;
         }
@@ -93,6 +93,7 @@ int main(int argc, char** argv) {
 
             case 2:
                 open_topic(argument);
+                first_frame = true;
                 break;
 
             case 3:
@@ -188,11 +189,11 @@ void open_topic(std::string name) {
         print_and_get_input(action, argument);
         switch (action) {
             case 1:
-                last_error = "Not implemented";
+                send_puback(sock_fd, topic.get_name(), argument);
                 break;
 
             case 2:
-                last_error = "Not implemented";
+                should_close = true;
                 break;
 
             default:

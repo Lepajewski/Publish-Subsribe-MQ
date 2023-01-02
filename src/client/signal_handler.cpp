@@ -23,3 +23,14 @@ void send_suback(int fd, std::string name) {
     write(fd, &len, sizeof(len));
     write(fd, name.c_str(), len);
 }
+
+void send_puback(int fd, std::string topic_name, std::string message) {
+    char code = signal_code_to_char(PUBACK);
+    write(fd, &code, 1);
+    size_t len = topic_name.size();
+    write(fd, &len, sizeof(len));
+    write(fd, topic_name.c_str(), len);
+    len = message.size();
+    write(fd, &len, sizeof(len));
+    write(fd, message.c_str(), len);
+}
