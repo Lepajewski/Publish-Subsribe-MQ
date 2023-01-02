@@ -104,7 +104,8 @@ int main(int argc, char** argv) {
                 break;
 
             case 4:
-                last_error = "Not implemented";
+                send_disconnack(sock_fd);
+                should_close = true;
                 break;
 
             case 2137:
@@ -119,6 +120,8 @@ int main(int argc, char** argv) {
 
     shutdown(sock_fd, SHUT_RDWR);
     close(sock_fd);
+
+    system("clear");
 
     return 0;
 }

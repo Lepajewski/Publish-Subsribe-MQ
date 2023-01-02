@@ -42,3 +42,8 @@ void send_unsuback(int fd, std::string topic_name) {
     write(fd, &len, sizeof(len));
     write(fd, topic_name.c_str(), len);
 }
+
+void send_disconnack(int fd) {
+    char code = signal_code_to_char(DISCONNACK);
+    write(fd, &code, 1);
+}
