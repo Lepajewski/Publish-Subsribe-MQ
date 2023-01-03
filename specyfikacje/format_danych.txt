@@ -47,3 +47,5 @@ kolejność danych w przesyłanych danych:
 
     - disconnack od klienta
         pusty sygnał
+    - disconnack od brokera
+        pusty sygnał

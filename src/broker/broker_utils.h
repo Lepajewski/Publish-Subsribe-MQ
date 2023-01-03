@@ -2,11 +2,11 @@
 #define BROKER_SIGNAL_H
 
 #include <stdio.h>
-#include <vector>
+#include <set>
 #include <arpa/inet.h>
 #include "client.h"
 
-int get_new_id(std::vector<Client*> &clients);
-void print_clients(std::vector<Client*> clients);
+int get_new_id(std::set<Client*> clients);
+void print_clients(std::set<Client*> clients);
 
 #endif

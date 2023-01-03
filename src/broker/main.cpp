@@ -9,6 +9,9 @@
 #include <vector>
 #include <algorithm>
 #include <thread>
+#include <stdarg.h>
+#include <map>
+#include <set>
 
 #include "../utils/config_parser.h"
 #include "../utils/signal_code.h"
@@ -16,16 +19,22 @@
 #include "broker_utils.h"
 #include "client.h"
 #include "signal_handler.h"
+#include "topic.h"
 
+Config cfg;
 
 // global socket descriptors (for signal handling)
 int broker_sock = -1;
-std::vector<int> client_sockets;
+std::set<Client*> clients;
 
+std::map<std::string, Topic*> topics;
 
 static void signal_handler(int signum);
-static void client_thread(std::vector<Client*> *clients, Client *c);
+static void client_thread(Client *c);
 
+int handle_suback(Client *c);
+
+void printf_verbose(const char* format, ...);
 
 int main(int argc, char** argv) {
 	if (argc < 2) {
@@ -37,16 +46,13 @@ int main(int argc, char** argv) {
 	signal(SIGINT, signal_handler);
 
 	// load config
-	Config cfg = parse_config(argv[1]);
+	cfg = parse_config(argv[1]);
 	printf("Config loaded\n");
 
 	char s_addr[INET_ADDRSTRLEN];
 	inet_ntop(AF_INET, &cfg.address, s_addr, INET_ADDRSTRLEN);
 	printf("Opening ipv4 listen socket on: %s:%u\n", s_addr, ntohs(cfg.port));
 	printf("Max clients: %u\n", cfg.max_clients);
-
-	// init clients
-	std::vector<Client*> clients;
 
 	// open broker socket
 	broker_sock = setup_socket(&cfg);
@@ -74,13 +80,11 @@ int main(int argc, char** argv) {
 			return -1;
 		}
 
-		client_sockets.push_back(client_sock);
-
 		// register new client
 		// to fix: two clients must not have same id
 		int id = get_new_id(clients);
-		Client *c = new Client(id, client_sock, 60.0, client_addr);
-		clients.push_back(c);
+		Client* c = new Client(id, client_sock, 60.0, client_addr);
+		clients.insert(c);
 
 		if (cfg.verbose) {
 			print_clients(clients);
@@ -91,7 +95,7 @@ int main(int argc, char** argv) {
 		}
 
 		// start thread on new client
-		std::thread new_client_thread(client_thread, &clients, c);
+		std::thread new_client_thread(client_thread, c);
 
 		new_client_thread.detach();
 	}
@@ -106,14 +110,19 @@ static void signal_handler(int signum) {
 	printf("\nKeyboard Interrupt ...closing socket\n");
 
 	close(broker_sock);
-	for (auto it : client_sockets) {
-		shutdown(it, SHUT_RDWR);
-		close(it);
+	for (Client* c : clients) {
+		shutdown(c->getSockFd(), SHUT_RDWR);
+		close(c->getSockFd());
+		delete c;
+	}
+
+	for (auto t : topics) {
+		delete t.second;
 	}
 	exit(signum);
 }
 
-static void client_thread(std::vector<Client*> *clients, Client *c) {
+static void client_thread(Client *c) {
 	bool should_close = false;
 	
 	if (read_connack(c->getSockFd()) != 0) {
@@ -125,13 +134,42 @@ static void client_thread(std::vector<Client*> *clients, Client *c) {
 	}
 
 	// main client loop
-	char data_in[100]{};
+	char action_code;
 	while (!should_close) {
-		int len = read(c->getSockFd(), data_in, sizeof(data_in)-1);
+		int len = read(c->getSockFd(), &action_code, 1);
+		if (len < 1) {
+			should_close = true;
+			break;
+		}
 
-		if (len < 1) break;
+		switch (char_to_signal_code(action_code)) {
+			case SUBACK:
+				if (handle_suback(c) < 0) {
+					should_close = true;
+				}
+				break;
+			
+			case PUBACK:
+				printf_verbose("Received PUBACK from %d\n", c->getId());
+				break;
 
-		printf("Received %2d bytes: %s\n", len, data_in);
+			case UNSUBACK:
+				printf_verbose("Received UNSUBACK from %d\n", c->getId());
+				break;
+
+			case DISCONNACK:
+				printf_verbose("----------------\n");
+				printf_verbose("Received DISCONNACK from %d\n", c->getId());
+				printf_verbose("----------------\n");
+				should_close = true;
+				break;
+
+			default:
+				printf_verbose("----------------\n");
+				printf_verbose("Received not supported action from %d\n", c->getId());
+				printf_verbose("----------------\n");
+				break;
+		}
 	}
 
 	close(c->getSockFd());
@@ -143,6 +181,41 @@ static void client_thread(std::vector<Client*> *clients, Client *c) {
 
 
 	// here will be semaphore take
-	clients->erase(std::remove(clients->begin(), clients->end(), c), clients->end());
+	clients.erase(c);
 	// here will be semaphore release
+
+	delete c;
+}
+
+int handle_suback(Client* c) {
+	printf("----------------\n");
+
+	printf_verbose("Received SUBACK from id: %d\n", c->getId());
+	std::string topic_name;
+	if (read_suback(c->getSockFd(), topic_name) < 0) {
+		return -1;
+	}
+	printf_verbose("Suback (id: %d) topic name: %s\n", c->getId(), topic_name.c_str());
+
+	if (topics.count(topic_name) < 1) {
+		Topic* t = new Topic(topic_name);
+		topics.insert({topic_name, t});
+		printf_verbose("Topic '%s' created\n", topic_name.c_str());
+	}
+
+	topics.at(topic_name)->subscribe_client(c);
+	printf("Id: %d subscribed to '%s'\n", c->getId(), topic_name.c_str());
+
+	printf("----------------\n");
+	return 0;
+}
+
+void printf_verbose(const char* format, ...) {
+	if (!cfg.verbose) {
+		return;
+	}
+	va_list args;
+	va_start(args, format);
+	vprintf(format, args);
+	va_end(args);
 }

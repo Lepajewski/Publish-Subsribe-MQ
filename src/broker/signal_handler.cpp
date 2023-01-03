@@ -15,3 +15,14 @@ int read_connack(int fd) {
 	}
     return 0;
 }
+
+int read_suback(int fd, std::string &name) {
+    size_t name_len;
+    if (read_type(fd, &name_len, sizeof(size_t)) < 0) {
+        return -1;
+    }
+    if (read_string(fd, name, name_len) < 0) {
+        return -1;
+    }
+    return 0;
+}
