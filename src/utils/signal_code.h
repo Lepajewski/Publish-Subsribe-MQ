@@ -12,6 +12,12 @@ enum signal_code {
     NAS = 0                 // not a signal
 };
 
+enum suback_success_code {
+    SUBACK_FAILURE,
+    SUBACK_SUBSCRIBE,
+    SUBACK_CREATE
+};
+
 char signal_code_to_char(signal_code code);
 signal_code char_to_signal_code(char symbol);
 

@@ -11,3 +11,11 @@ void Topic::add_message(Message message) {
 void Topic::subscribe_client(Client* client) {
     this->subscribers.insert(client);
 }
+
+std::string Topic::get_name() {
+    return this->name;
+}
+
+std::vector<Message> Topic::get_messages() {
+    return this->messages;
+}

@@ -16,6 +16,8 @@ public:
     Topic(std::string name);
     void add_message(Message message);
     void subscribe_client(Client* client);
+    std::string get_name();
+    std::vector<Message> get_messages();
 };
 
 #endif

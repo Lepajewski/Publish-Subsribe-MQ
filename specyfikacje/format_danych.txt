@@ -14,15 +14,16 @@ kolejność danych w przesyłanych danych:
         2. długość nazwy topicu                                     (size_t)
         3. nazwa topicu
     - suback od brokera
-        2. długość nazwy topicu                                     (size_t)
-        3. nazwa topicu
-        4. kod powodzenia subskrybcji (jakieś 0 lub 1 czy coś)      (int)
+        2. kod powodzenia subskrybcji (jakieś 0 lub 1 czy coś)      (suback_success_code)
+        ----- tylko jeśli 2. nie jest SUBACK_FAILURE
+        3. długość nazwy topicu                                     (size_t)
+        4. nazwa topicu
+        5. ilość wiadomości w topicu                                (size_t)
         dla każdej wiadomości w topicu {
-            5. id wiadomości                                        (int)
-            6. długość wiadomości                                   (size_t)
-            7. wiadomość
+            6. id wiadomości                                        (int)
+            7. długość wiadomości                                   (size_t)
+            8. wiadomość
         }
-        8. znak (char)03                                            (char)
 
     - puback od brokera
         2. id wiadomości                                            (int)

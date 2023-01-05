@@ -26,3 +26,28 @@ int read_suback(int fd, std::string &name) {
     }
     return 0;
 }
+
+void send_suback(int fd, suback_success_code success_code, Topic* topic) {
+    char code = signal_code_to_char(SUBACK);
+    write(fd, &code, 1);
+
+    write(fd, &success_code, sizeof(success_code));
+
+    if (success_code == SUBACK_FAILURE) {
+        return;
+    }
+
+    size_t len = topic->get_name().size();
+    write(fd, &len, sizeof(len));
+    write(fd, topic->get_name().c_str(), len);
+
+    len = topic->get_messages().size();
+    write(fd, &len, sizeof(len));
+    for (auto m : topic->get_messages()) {
+        write(fd, &m.id, sizeof(m.id));
+
+        len = m.content.size();
+        write(fd, &len, sizeof(len));
+        write(fd, m.content.c_str(), len);
+    }
+}

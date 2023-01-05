@@ -193,11 +193,13 @@ int handle_suback(Client* c) {
 	printf_verbose("Received SUBACK from id: %d\n", c->getId());
 	std::string topic_name;
 	if (read_suback(c->getSockFd(), topic_name) < 0) {
+		send_suback(c->getSockFd(), SUBACK_FAILURE, NULL);
 		return -1;
 	}
 	printf_verbose("Suback (id: %d) topic name: %s\n", c->getId(), topic_name.c_str());
 
-	if (topics.count(topic_name) < 1) {
+	bool created = false;
+	if ( (created = (topics.count(topic_name) < 1)) ) {
 		Topic* t = new Topic(topic_name);
 		topics.insert({topic_name, t});
 		printf_verbose("Topic '%s' created\n", topic_name.c_str());
@@ -205,6 +207,8 @@ int handle_suback(Client* c) {
 
 	topics.at(topic_name)->subscribe_client(c);
 	printf("Id: %d subscribed to '%s'\n", c->getId(), topic_name.c_str());
+
+	send_suback(c->getSockFd(), (created ? SUBACK_CREATE : SUBACK_SUBSCRIBE), topics.at(topic_name));
 
 	printf("----------------\n");
 	return 0;
