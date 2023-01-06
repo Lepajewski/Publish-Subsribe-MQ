@@ -112,6 +112,7 @@ static void signal_handler(int signum) {
 
 	close(broker_sock);
 	for (Client* c : clients) {
+		send_disconnack(c->getSockFd());
 		shutdown(c->getSockFd(), SHUT_RDWR);
 		close(c->getSockFd());
 		delete c;

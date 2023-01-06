@@ -2,18 +2,18 @@ kolejność danych w przesyłanych danych:
 1. nr sygnału (enum sygnałów z brokera)
     sygnały:
 
-    - connack od klienta
+    - connack od klienta                                            D - D
         broker czekuje czy już istnieje połączenie od danego ip:port
-    - connack od brokera
+    - connack od brokera                                            D - D
         2. wygenerowane id klienta                                  (int)
 
-    - ping od brokera i klienta
+    - ping od brokera i klienta                                     ND - ND
         pusta wiadomość budząca
 
-    - suback od klienta
+    - suback od klienta                                             D - D
         2. długość nazwy topicu                                     (size_t)
         3. nazwa topicu
-    - suback od brokera
+    - suback od brokera                                             D - ND
         2. kod powodzenia subskrybcji (jakieś 0 lub 1 czy coś)      (suback_success_code)
         ----- tylko jeśli 2. nie jest SUBACK_FAILURE
         3. długość nazwy topicu                                     (size_t)
@@ -25,28 +25,28 @@ kolejność danych w przesyłanych danych:
             8. wiadomość
         }
 
-    - puback od brokera
+    - puback od brokera                                             D - ND
         2. id wiadomości                                            (int)
-    - puback od klienta
+    - puback od klienta                                             D - D
         2. długość nazwy topicu                                     (size_t)
         4. nazwa topicu
         5. długość wiadomości                                       (size_t)
         7. wiadomość
     
-    - newmes od brokera
+    - newmes od brokera                                             D - ND
         2. długość nazwy topicu                                     (size_t)
         3. nazwa topicu
         4. id wiadomości                                            (int)
         5. długość wiadomości                                       (size_t)
         6. wiadomość
 
-    - unsuback od klienta
+    - unsuback od klienta                                           D - D
         2. długość nazwy topicu                                     (size_t)
         4. nazwa topicu
-    - unsuback od brokera
+    - unsuback od brokera                                           ND - ND
         2. kod powodzenia desubskrybcji (jakieś 0 lub 1 czy coś)    (int)
 
-    - disconnack od klienta
+    - disconnack od klienta                                         D - D
         pusty sygnał
-    - disconnack od brokera
+    - disconnack od brokera                                         D - ND
         pusty sygnał

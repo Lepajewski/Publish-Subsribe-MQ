@@ -23,4 +23,6 @@ void send_puback(int fd, int id);
 
 void send_newmes(int fd, std::string &topic_name, int id, std::string &message_content);
 
+void send_disconnack(int fd);
+
 #endif

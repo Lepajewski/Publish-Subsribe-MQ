@@ -90,3 +90,8 @@ void send_newmes(int fd, std::string &topic_name, int id, std::string &message_c
     write(fd, &len, sizeof(len));
     write(fd, message_content.c_str(), len);
 }
+
+void send_disconnack(int fd) {
+    char code = signal_code_to_char(DISCONNACK);
+    write(fd, &code, 1);
+}
