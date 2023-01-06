@@ -5,6 +5,7 @@
 
 class Message {
 public:
+    Message(int id, std::string content);
     int id;
     std::string content;
 };

@@ -4,8 +4,10 @@ Topic::Topic(std::string name) {
     this->name = name;
 }
 
-void Topic::add_message(Message message) {
-    this->messages.push_back(message);
+int Topic::add_message(std::string message) {
+    int id = this->get_new_id();
+    Message m(id, message);
+    this->messages.push_back(m);
 }
 
 void Topic::subscribe_client(Client* client) {
@@ -18,4 +20,12 @@ std::string Topic::get_name() {
 
 std::vector<Message> Topic::get_messages() {
     return this->messages;
+}
+
+int Topic::get_new_id() {
+    return this->messages.size()+1;
+}
+
+std::set<Client*> Topic::get_subscribers() {
+    return this->subscribers;
 }

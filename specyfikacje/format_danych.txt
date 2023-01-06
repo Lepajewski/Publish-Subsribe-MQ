@@ -34,11 +34,11 @@ kolejność danych w przesyłanych danych:
         7. wiadomość
     
     - newmes od brokera
-        2. id wiadomości                                            (int)
-        4. długość nazwy topicu                                     (size_t)
-        6. nazwa topicu
-        7. długość wiadomości                                       (size_t)
-        9. wiadomość
+        2. długość nazwy topicu                                     (size_t)
+        3. nazwa topicu
+        4. id wiadomości                                            (int)
+        5. długość wiadomości                                       (size_t)
+        6. wiadomość
 
     - unsuback od klienta
         2. długość nazwy topicu                                     (size_t)

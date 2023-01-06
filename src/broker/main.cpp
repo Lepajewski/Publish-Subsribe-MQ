@@ -33,6 +33,7 @@ static void signal_handler(int signum);
 static void client_thread(Client *c);
 
 int handle_suback(Client *c);
+int handle_puback(Client *c);
 
 void printf_verbose(const char* format, ...);
 
@@ -145,12 +146,13 @@ static void client_thread(Client *c) {
 		switch (char_to_signal_code(action_code)) {
 			case SUBACK:
 				if (handle_suback(c) < 0) {
+					fprintf(stderr, "Error with haldling suback from id: %d. Closing connection...\n", c->getId());
 					should_close = true;
 				}
 				break;
 			
 			case PUBACK:
-				printf_verbose("Received PUBACK from %d\n", c->getId());
+				handle_puback(c);
 				break;
 
 			case UNSUBACK:
@@ -212,6 +214,34 @@ int handle_suback(Client* c) {
 
 	printf("----------------\n");
 	return 0;
+}
+
+int handle_puback(Client *c) {
+	printf("----------------\n");
+
+	printf_verbose("Received PUBACK from %d\n", c->getId());
+	std::string topic_name, message_content;
+	if (read_puback(c->getSockFd(), topic_name, message_content) < 0) {
+		send_puback(c->getSockFd(), -1);
+		return -1;
+	}
+
+	printf("Id: %d send a message: '%s' to the topic: '%s'\n", c->getId(), message_content.c_str(), topic_name.c_str());
+
+	int id = topics.at(topic_name)->add_message(message_content);
+	send_puback(c->getSockFd(), id);
+	printf_verbose("Sent puback to id: %d\n", c->getId());
+
+	printf_verbose("Sending newmes to subscribers:\n");
+	for (auto cl : topics.at(topic_name)->get_subscribers()) {
+		if (cl == c) {
+			continue;
+		}
+		send_newmes(cl->getSockFd(), topic_name, id, message_content);
+		printf_verbose("Sent newmes to id: %d\n", cl->getId());
+	}
+
+	printf("----------------\n");
 }
 
 void printf_verbose(const char* format, ...) {

@@ -12,12 +12,14 @@ private:
     std::string name;
     std::vector<Message> messages;
     std::set<Client*> subscribers;
+    int get_new_id();
 public:
     Topic(std::string name);
-    void add_message(Message message);
+    int add_message(std::string message);
     void subscribe_client(Client* client);
     std::string get_name();
     std::vector<Message> get_messages();
+    std::set<Client*> get_subscribers();
 };
 
 #endif

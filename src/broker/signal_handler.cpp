@@ -51,3 +51,42 @@ void send_suback(int fd, suback_success_code success_code, Topic* topic) {
         write(fd, m.content.c_str(), len);
     }
 }
+
+int read_puback(int fd, std::string &topic_name, std::string &message_content) {
+    size_t name_len;
+    if (read_type(fd, &name_len, sizeof(size_t)) < 0) {
+        return -1;
+    }
+    if (read_string(fd, topic_name, name_len) < 0) {
+        return -1;
+    }
+    if (read_type(fd, &name_len, sizeof(size_t)) < 0) {
+        return -1;
+    }
+    if (read_string(fd, message_content, name_len) < 0) {
+        return -1;
+    }
+    return 0;
+}
+
+void send_puback(int fd, int id) {
+    char code = signal_code_to_char(PUBACK);
+    write(fd, &code, 1);
+
+    write(fd, &id, sizeof(id));
+}
+
+void send_newmes(int fd, std::string &topic_name, int id, std::string &message_content) {
+    char code = signal_code_to_char(NEWMES);
+    write(fd, &code, 1);
+
+    size_t len = topic_name.size();
+    write(fd, &len, sizeof(len));
+    write(fd, topic_name.c_str(), len);
+
+    write(fd, &id, sizeof(id));
+
+    len = message_content.size();
+    write(fd, &len, sizeof(len));
+    write(fd, message_content.c_str(), len);
+}
