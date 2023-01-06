@@ -3,7 +3,7 @@ kolejność danych w przesyłanych danych:
     sygnały:
 
     - connack od klienta                                            D - D
-        broker czekuje czy już istnieje połączenie od danego ip:port
+        pusta wiadomość
     - connack od brokera                                            D - D
         2. wygenerowane id klienta                                  (int)
 
