@@ -242,6 +242,7 @@ int handle_puback(Client *c) {
 	}
 
 	printf("----------------\n");
+	return 0;
 }
 
 void printf_verbose(const char* format, ...) {

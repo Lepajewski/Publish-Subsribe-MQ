@@ -8,6 +8,7 @@ int Topic::add_message(std::string message) {
     int id = this->get_new_id();
     Message m(id, message);
     this->messages.push_back(m);
+    return id;
 }
 
 void Topic::subscribe_client(Client* client) {
