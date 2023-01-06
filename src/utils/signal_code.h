@@ -18,6 +18,11 @@ enum suback_success_code {
     SUBACK_CREATE
 };
 
+enum unsuback_success_code {
+    UNSUBACK_SUCCESS,
+    UNSUBACK_FAILURE
+};
+
 char signal_code_to_char(signal_code code);
 signal_code char_to_signal_code(char symbol);
 

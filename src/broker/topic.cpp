@@ -30,3 +30,8 @@ int Topic::get_new_id() {
 std::set<Client*> Topic::get_subscribers() {
     return this->subscribers;
 }
+
+int Topic::unsubscribe_client(Client* client) {
+    this->subscribers.erase(client);
+    return this->subscribers.size();
+}

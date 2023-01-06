@@ -95,3 +95,21 @@ void send_disconnack(int fd) {
     char code = signal_code_to_char(DISCONNACK);
     write(fd, &code, 1);
 }
+
+int read_unsuback(int fd, std::string &topic_name) {
+    size_t name_len;
+    if (read_type(fd, &name_len, sizeof(size_t)) < 0) {
+        return -1;
+    }
+    if (read_string(fd, topic_name, name_len) < 0) {
+        return -1;
+    }
+    return 0;
+}
+
+void send_unsuback(int fd, unsuback_success_code success_code) {
+    char code = signal_code_to_char(DISCONNACK);
+    write(fd, &code, 1);
+
+    write(fd, &success_code, sizeof(success_code));
+}

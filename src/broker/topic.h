@@ -20,6 +20,7 @@ public:
     std::string get_name();
     std::vector<Message> get_messages();
     std::set<Client*> get_subscribers();
+    int unsubscribe_client(Client* client);
 };
 
 #endif

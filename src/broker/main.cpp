@@ -30,10 +30,11 @@ std::set<Client*> clients;
 std::map<std::string, Topic*> topics;
 
 static void signal_handler(int signum);
-static void client_thread(Client *c);
+static void client_thread(Client* c);
 
-int handle_suback(Client *c);
-int handle_puback(Client *c);
+int handle_suback(Client* c);
+int handle_puback(Client* c);
+int handle_unsuback(Client* c);
 
 void printf_verbose(const char* format, ...);
 
@@ -153,11 +154,17 @@ static void client_thread(Client *c) {
 				break;
 			
 			case PUBACK:
-				handle_puback(c);
+				if (handle_puback(c) < 0) {
+					fprintf(stderr, "Error with haldling puback from id: %d. Closing connection...\n", c->getId());
+					should_close = true;
+				}
 				break;
 
 			case UNSUBACK:
-				printf_verbose("Received UNSUBACK from %d\n", c->getId());
+				if (handle_unsuback(c) < 0) {
+					fprintf(stderr, "Error with haldling unsuback from id: %d. Closing connection...\n", c->getId());
+					should_close = true;
+				}
 				break;
 
 			case DISCONNACK:
@@ -175,6 +182,7 @@ static void client_thread(Client *c) {
 		}
 	}
 
+	send_disconnack(c->getSockFd());
 	close(c->getSockFd());
 
 	printf("Client disconnected: %s:%hu, id: %d\n", 
@@ -217,7 +225,7 @@ int handle_suback(Client* c) {
 	return 0;
 }
 
-int handle_puback(Client *c) {
+int handle_puback(Client* c) {
 	printf("----------------\n");
 
 	printf_verbose("Received PUBACK from %d\n", c->getId());
@@ -241,6 +249,29 @@ int handle_puback(Client *c) {
 		send_newmes(cl->getSockFd(), topic_name, id, message_content);
 		printf_verbose("Sent newmes to id: %d\n", cl->getId());
 	}
+
+	printf("----------------\n");
+	return 0;
+}
+
+int handle_unsuback(Client* c) {
+	printf("----------------\n");
+
+	printf_verbose("Received UNSUBACK from %d\n", c->getId());
+	
+	std::string topic_name;
+	if (read_unsuback(c->getSockFd(), topic_name) < 0) {
+		send_unsuback(c->getSockFd(), UNSUBACK_FAILURE);
+		return -1;
+	}
+
+	printf("Id: %d unsubscribed from topic: '%s'\n", c->getId(), topic_name.c_str());
+
+	if (topics.at(topic_name)->unsubscribe_client(c) == 0) {
+		printf_verbose("No subscribers in topic: '%s'\n", topic_name.c_str());
+	}
+
+	send_unsuback(c->getSockFd(), UNSUBACK_SUCCESS);
 
 	printf("----------------\n");
 	return 0;
