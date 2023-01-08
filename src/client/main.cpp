@@ -9,6 +9,7 @@
 #include <string>
 #include <sys/ioctl.h>
 #include <unordered_set>
+#include <thread>
 
 #include "../utils/config_parser.h"
 #include "../utils/signal_code.h"
@@ -33,6 +34,8 @@ void sub_to_topic(std::string name);
 void open_topic(std::string name);
 void send_message(Topic topic, std::string message);
 void unsub_from_topic(std::string name);
+
+static void receiver_thread_body();
 
 void load_sample_data();
 
@@ -73,7 +76,7 @@ int main(int argc, char** argv) {
         return -1;
     }
 
-    load_sample_data();
+    std::thread receiver_thread(receiver_thread_body);
 
     bool should_close = false;
     bool first_frame = true;
@@ -234,6 +237,44 @@ void unsub_from_topic(std::string name) {
     Topic topic = subscribed_topics[index];
     send_unsuback(sock_fd, topic.get_name());
     unsub_awaiting_topics.insert(topic.get_name());
+}
+
+static void receiver_thread_body() {
+    bool should_close = false;
+    char action_code;
+	while (!should_close) {
+		int len = read(sock_fd, &action_code, 1);
+		if (len < 1) {
+			should_close = true;
+			break;
+		}
+
+        switch (char_to_signal_code(action_code)) {
+            case SUBACK:
+                printf("received suback from broker\n");
+                break;
+            
+            case PUBACK:
+                printf("received puback from broker\n");
+                break;
+
+            case NEWMES:
+                printf("received newmes from broker \n");
+                break;
+
+            case UNSUBACK:
+                printf("received unsuback from broker\n");
+                break;
+
+            case DISCONNACK:
+                printf("received disconnack from broker\n");
+                break;
+
+            default:
+                printf("received not supported signal from broker\n");
+                break;
+        }
+    }
 }
 
 void load_sample_data() {
