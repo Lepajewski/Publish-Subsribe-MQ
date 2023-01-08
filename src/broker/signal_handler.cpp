@@ -76,7 +76,7 @@ void send_puback(int fd, int id) {
     write(fd, &id, sizeof(id));
 }
 
-void send_newmes(int fd, std::string &topic_name, int id, std::string &message_content) {
+void send_newmes(int fd, std::string topic_name, int id, std::string message_content) {
     char code = signal_code_to_char(NEWMES);
     write(fd, &code, 1);
 
@@ -107,9 +107,17 @@ int read_unsuback(int fd, std::string &topic_name) {
     return 0;
 }
 
-void send_unsuback(int fd, unsuback_success_code success_code) {
-    char code = signal_code_to_char(DISCONNACK);
+void send_unsuback(int fd, unsuback_success_code success_code, std::string topic_name) {
+    char code = signal_code_to_char(UNSUBACK);
     write(fd, &code, 1);
 
     write(fd, &success_code, sizeof(success_code));
+
+    if (success_code == UNSUBACK_FAILURE) {
+        return;
+    }
+
+    size_t len = topic_name.size();
+    write(fd, &len, sizeof(len));
+    write(fd, topic_name.c_str(), len);
 }

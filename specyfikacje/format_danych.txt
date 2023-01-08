@@ -42,9 +42,11 @@ kolejność danych w przesyłanych danych:
 
     - unsuback od klienta                                           D - D
         2. długość nazwy topicu                                     (size_t)
-        4. nazwa topicu
+        3. nazwa topicu
     - unsuback od brokera                                           D - ND
         2. kod powodzenia desubskrybcji                             (unsuback_success_code)
+        3. długość nazwy topicu                                     (size_t)
+        4. nazwa topicu
 
     - disconnack od klienta                                         D - D
         pusty sygnał

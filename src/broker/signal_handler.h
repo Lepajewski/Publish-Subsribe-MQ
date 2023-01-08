@@ -21,12 +21,12 @@ int read_puback(int fd, std::string &topic_name, std::string &message_content);
 
 void send_puback(int fd, int id);
 
-void send_newmes(int fd, std::string &topic_name, int id, std::string &message_content);
+void send_newmes(int fd, std::string topic_name, int id, std::string message_content);
 
 void send_disconnack(int fd);
 
 int read_unsuback(int fd, std::string &topic_name);
 
-void send_unsuback(int fd, unsuback_success_code success_code);
+void send_unsuback(int fd, unsuback_success_code success_code, std::string topic_name);
 
 #endif

@@ -261,7 +261,7 @@ int handle_unsuback(Client* c) {
 	
 	std::string topic_name;
 	if (read_unsuback(c->getSockFd(), topic_name) < 0) {
-		send_unsuback(c->getSockFd(), UNSUBACK_FAILURE);
+		send_unsuback(c->getSockFd(), UNSUBACK_FAILURE, "");
 		return -1;
 	}
 
@@ -271,7 +271,7 @@ int handle_unsuback(Client* c) {
 		printf_verbose("No subscribers in topic: '%s'\n", topic_name.c_str());
 	}
 
-	send_unsuback(c->getSockFd(), UNSUBACK_SUCCESS);
+	send_unsuback(c->getSockFd(), UNSUBACK_SUCCESS, topic_name);
 
 	printf("----------------\n");
 	return 0;
