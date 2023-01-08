@@ -146,39 +146,44 @@ static void client_thread(Client *c) {
 		}
 
 		switch (char_to_signal_code(action_code)) {
-			case SUBACK:
+			case SUBACK: {
 				if (handle_suback(c) < 0) {
 					fprintf(stderr, "Error with haldling suback from id: %d. Closing connection...\n", c->getId());
 					should_close = true;
 				}
 				break;
+			}
 			
-			case PUBACK:
+			case PUBACK: {
 				if (handle_puback(c) < 0) {
 					fprintf(stderr, "Error with haldling puback from id: %d. Closing connection...\n", c->getId());
 					should_close = true;
 				}
 				break;
+			}
 
-			case UNSUBACK:
+			case UNSUBACK: {
 				if (handle_unsuback(c) < 0) {
 					fprintf(stderr, "Error with haldling unsuback from id: %d. Closing connection...\n", c->getId());
 					should_close = true;
 				}
 				break;
+			}
 
-			case DISCONNACK:
+			case DISCONNACK: {
 				printf_verbose("----------------\n");
 				printf_verbose("Received DISCONNACK from %d\n", c->getId());
 				printf_verbose("----------------\n");
 				should_close = true;
 				break;
+			}
 
-			default:
+			default: {
 				printf_verbose("----------------\n");
 				printf_verbose("Received not supported action from %d\n", c->getId());
 				printf_verbose("----------------\n");
 				break;
+			}
 		}
 	}
 
@@ -219,7 +224,8 @@ int handle_suback(Client* c) {
 	topics.at(topic_name)->subscribe_client(c);
 	printf("Id: %d subscribed to '%s'\n", c->getId(), topic_name.c_str());
 
-	send_suback(c->getSockFd(), (created ? SUBACK_CREATE : SUBACK_SUBSCRIBE), topics.at(topic_name));
+	suback_success_code code = created ? SUBACK_CREATE : SUBACK_SUBSCRIBE;
+	send_suback(c->getSockFd(), code, topics.at(topic_name));
 
 	printf("----------------\n");
 	return 0;

@@ -5,10 +5,9 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 #include <iostream>
-#include <vector>
+#include <map>
 #include <string>
 #include <sys/ioctl.h>
-#include <unordered_set>
 #include <thread>
 
 #include "../utils/config_parser.h"
@@ -20,24 +19,25 @@
 
 int id;
 int sock_fd;
-std::vector<Topic> subscribed_topics;
+std::map<std::string, Topic*> subscribed_topics;
 std::string last_error;
 std::string clear_line;
-std::unordered_set<std::string> sub_awaiting_topics;
-std::unordered_set<std::string> unsub_awaiting_topics;
+
+// to remove
+bool* first_frame = new bool;
 
 void print_menu();
 void print_and_get_input(int& action, std::string& argument);
-void print_chat(Topic topic);
+void print_chat(Topic* topic);
 
 void sub_to_topic(std::string name);
 void open_topic(std::string name);
-void send_message(Topic topic, std::string message);
+void send_message(Topic* topic, std::string message);
 void unsub_from_topic(std::string name);
 
 static void receiver_thread_body();
 
-void load_sample_data();
+int handle_suback();
 
 int main(int argc, char** argv) {
     if (argc < 2) {
@@ -79,13 +79,13 @@ int main(int argc, char** argv) {
     std::thread receiver_thread(receiver_thread_body);
 
     bool should_close = false;
-    bool first_frame = true;
+    *first_frame = true;
     while (!should_close) {
 
         if (first_frame) {
             system("clear");
             print_menu();
-            first_frame = false;
+            *first_frame = false;
         }
 
         std::string argument;
@@ -93,31 +93,37 @@ int main(int argc, char** argv) {
         print_and_get_input(action, argument);
 
         switch (action) {
-            case 1:
+            case 1: {
                 sub_to_topic(argument);
                 break;
+            }
 
-            case 2:
+            case 2: {
                 open_topic(argument);
-                first_frame = true;
+                *first_frame = true;
                 break;
+            }
 
-            case 3:
+            case 3: {
                 unsub_from_topic(argument);
                 break;
+            }
 
-            case 4:
+            case 4: {
                 send_disconnack(sock_fd);
                 should_close = true;
                 break;
+            }
 
-            case 2137:
+            case 2137: {
                 last_error = "Najwiekszy Polak";
                 break;
+            }
 
-            default:
+            default: {
                 last_error = "Not a valid command";
                 break;
+            }
         }
     }
 
@@ -132,8 +138,8 @@ int main(int argc, char** argv) {
 void print_menu() {
     printf("Hello user: %d!\n", id);
     printf("Your topics: \n");
-    for (Topic topic : subscribed_topics) {
-        printf("%s\n", topic.get_name().c_str());
+    for (auto topic : subscribed_topics) {
+        printf("%s\n", topic.second->get_name().c_str());
     }
     printf("\n");
     printf("1. Subscribe to topic\n");
@@ -158,9 +164,9 @@ void print_and_get_input(int& action, std::string& argument) {
     parse_input(command, action, argument);
 }
 
-void print_chat(Topic topic) {
-    printf("Opened topic: %s\n", topic.get_name().c_str());
-    topic.print_messages();
+void print_chat(Topic* topic) {
+    printf("Opened topic: %s\n", topic->get_name().c_str());
+    topic->print_messages();
     printf("\n1. Write message\n");
     printf("2. Back to menu\n");
 }
@@ -170,12 +176,11 @@ void sub_to_topic(std::string name) {
         last_error = "No topic name given in agrument";
         return;
     }
-    if (check_if_topic_is_in_list(subscribed_topics, name)) {
+    if (subscribed_topics.count(name) > 0) {
         last_error = "Topic already subscribed";
         return;
     }
     send_suback(sock_fd, name);
-    sub_awaiting_topics.insert(name);
 }
 
 void open_topic(std::string name) {
@@ -188,7 +193,8 @@ void open_topic(std::string name) {
         last_error = "More than one topic contain given name as prefix";
         return;
     }
-    Topic topic = subscribed_topics[index];
+    std::map<std::string, Topic*>::iterator it = std::next(subscribed_topics.begin(), index);
+    Topic* topic = it->second;
     bool should_close = false;
     system("clear");
     print_chat(topic);
@@ -197,27 +203,30 @@ void open_topic(std::string name) {
     while (!should_close) {
         print_and_get_input(action, argument);
         switch (action) {
-            case 1:
+            case 1: {
                 send_message(topic, argument);
                 break;
+            }
 
-            case 2:
+            case 2: {
                 should_close = true;
                 break;
+            }
 
-            default:
+            default: {
                 last_error = "Not a valid command";
                 break;
+            }
         }
     }
 }
 
-void send_message(Topic topic, std::string message) {
+void send_message(Topic* topic, std::string message) {
     if (message == "") {
         last_error = "No message given";
         return;
     }
-    send_puback(sock_fd, topic.get_name(), message);
+    send_puback(sock_fd, topic->get_name(), message);
 }
 
 void unsub_from_topic(std::string name) {
@@ -234,9 +243,9 @@ void unsub_from_topic(std::string name) {
         last_error = "More than one topic contain given name as prefix";
         return;
     }
-    Topic topic = subscribed_topics[index];
-    send_unsuback(sock_fd, topic.get_name());
-    unsub_awaiting_topics.insert(topic.get_name());
+    std::map<std::string, Topic*>::iterator it = std::next(subscribed_topics.begin(), index);
+    Topic* topic = it->second;
+    send_unsuback(sock_fd, topic->get_name());
 }
 
 static void receiver_thread_body() {
@@ -250,35 +259,68 @@ static void receiver_thread_body() {
 		}
 
         switch (char_to_signal_code(action_code)) {
-            case SUBACK:
-                printf("received suback from broker\n");
+            case SUBACK: {
+                int ret = handle_suback();
+                if (ret < 0) {
+                    should_close = true;
+                    fprintf(stderr, "Error handling suback.\n");
+                }
+                else if (ret > 0) {
+                    // signalize that main menu should be redrawn (show just subscribed topic) to change
+                    *first_frame = true;
+                }
                 break;
+            }
             
-            case PUBACK:
+            case PUBACK: {
                 printf("received puback from broker\n");
                 break;
+            }
 
-            case NEWMES:
+            case NEWMES: {
                 printf("received newmes from broker \n");
                 break;
+            }
 
-            case UNSUBACK:
+            case UNSUBACK: {
                 printf("received unsuback from broker\n");
                 break;
+            }
 
-            case DISCONNACK:
+            case DISCONNACK: {
                 printf("received disconnack from broker\n");
                 break;
+            }
 
-            default:
+            default: {
                 printf("received not supported signal from broker\n");
                 break;
+            }
         }
     }
 }
 
-void load_sample_data() {
-    for (int i = 0; i < 3; i++) {
-        subscribed_topics.push_back(get_random_topic(20));
+int handle_suback() {
+    suback_success_code success;
+    if (read_suback_success(sock_fd, success) < 0) {
+        return -1;
     }
+
+    if (success == SUBACK_FAILURE) {
+        return 0;
+    }
+
+    std::string topic_name;
+    if (read_suback_name(sock_fd, topic_name) < 0) {
+        return -1;
+    }
+
+    Topic* t = new Topic(topic_name);
+    subscribed_topics.insert({topic_name, t});
+
+    if (read_suback_messages(sock_fd, subscribed_topics.at(topic_name)) < 0) {
+        return -1;
+    }
+
+    return 0;
 }

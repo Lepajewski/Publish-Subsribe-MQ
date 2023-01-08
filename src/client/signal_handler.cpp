@@ -47,3 +47,47 @@ void send_disconnack(int fd) {
     char code = signal_code_to_char(DISCONNACK);
     write(fd, &code, 1);
 }
+
+int read_suback_success(int fd, suback_success_code &success) {
+    if (read_type(fd, &success, sizeof(success)) < 0) {
+        return -1;
+    }
+    return 0;
+}
+
+int read_suback_name(int fd, std::string &topic_name) {
+    size_t len;
+    if (read_type(fd, &len, sizeof(len)) < 0) {
+        return -1;
+    }
+    if (read_string(fd, topic_name, len) < 0) {
+        return -1;
+    }
+    return 0;
+}
+
+int read_suback_messages(int fd, Topic* topic) {
+    size_t n;
+    size_t len;
+    std::string content;
+    int id;
+
+    if (read_type(fd, &n, sizeof(n)) < 0) {
+        return -1;
+    }
+
+    for (size_t i = 0; i < n; i++) {
+        if (read_type(fd, &id, sizeof(id)) < 0) {
+            return -1;
+        }
+        if (read_type(fd, &len, sizeof(len)) < 0) {
+            return -1;
+        }
+        if (read_string(fd, content, len) < 0) {
+            return -1;
+        }
+
+        topic->add_message(id, content);
+    }
+    return 0;
+}

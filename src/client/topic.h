@@ -12,7 +12,7 @@ private:
     std::vector<Message> messages;
 public:
     Topic(std::string name);
-    void add_message(Message message);
+    void add_message(int id, std::string content);
     std::string get_name();
     void print_messages();
     int get_messages_lenght();

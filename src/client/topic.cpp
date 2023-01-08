@@ -4,7 +4,8 @@ Topic::Topic(std::string name) {
     this->name = name;
 }
 
-void Topic::add_message(Message message) {
+void Topic::add_message(int id, std::string content) {
+    Message message(id, content);
     messages.push_back(message);
 }
 

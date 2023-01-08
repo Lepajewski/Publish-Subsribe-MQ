@@ -13,14 +13,14 @@ enum signal_code {
 };
 
 enum suback_success_code {
-    SUBACK_FAILURE,
-    SUBACK_SUBSCRIBE,
-    SUBACK_CREATE
+    SUBACK_FAILURE = 0,
+    SUBACK_SUBSCRIBE = 1,
+    SUBACK_CREATE = 2
 };
 
 enum unsuback_success_code {
-    UNSUBACK_SUCCESS,
-    UNSUBACK_FAILURE
+    UNSUBACK_SUCCESS = 1,
+    UNSUBACK_FAILURE = 0
 };
 
 char signal_code_to_char(signal_code code);

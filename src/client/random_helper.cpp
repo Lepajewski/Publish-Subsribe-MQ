@@ -1,14 +1,5 @@
 #include "random_helper.h"
 
-Topic get_random_topic(int messages_count) {
-    Topic topic(get_random_string(5));
-    for (int i = 0; i < messages_count; i++) {
-        Message message(i, get_random_string(10));
-        topic.add_message(message);
-    }
-    return topic;
-}
-
 std::string get_random_string(int len) {
     static const char alphanum[] =
         "0123456789"
