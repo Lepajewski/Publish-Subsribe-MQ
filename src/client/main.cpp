@@ -68,7 +68,7 @@ int main(int argc, char** argv) {
         return -1;
     }
 
-    send_connack(sock_fd);
+    send_conn(sock_fd);
     if (read_connack(sock_fd, id) != 0) {
         fprintf(stderr, "No connect acknowlegment from broker.\n");
         shutdown(sock_fd, SHUT_RDWR);
@@ -82,7 +82,7 @@ int main(int argc, char** argv) {
     *first_frame = true;
     while (!should_close) {
 
-        if (first_frame) {
+        if (*first_frame) {
             system("clear");
             print_menu();
             *first_frame = false;
@@ -110,7 +110,7 @@ int main(int argc, char** argv) {
             }
 
             case 4: {
-                send_disconnack(sock_fd);
+                send_disconn(sock_fd);
                 should_close = true;
                 break;
             }
@@ -180,7 +180,7 @@ void sub_to_topic(std::string name) {
         last_error = "Topic already subscribed";
         return;
     }
-    send_suback(sock_fd, name);
+    send_sub(sock_fd, name);
 }
 
 void open_topic(std::string name) {
@@ -226,7 +226,7 @@ void send_message(Topic* topic, std::string message) {
         last_error = "No message given";
         return;
     }
-    send_puback(sock_fd, topic->get_name(), message);
+    send_pub(sock_fd, topic->get_name(), message);
 }
 
 void unsub_from_topic(std::string name) {
@@ -245,7 +245,7 @@ void unsub_from_topic(std::string name) {
     }
     std::map<std::string, Topic*>::iterator it = std::next(subscribed_topics.begin(), index);
     Topic* topic = it->second;
-    send_unsuback(sock_fd, topic->get_name());
+    send_unsub(sock_fd, topic->get_name());
 }
 
 static void receiver_thread_body() {
@@ -287,8 +287,8 @@ static void receiver_thread_body() {
                 break;
             }
 
-            case DISCONNACK: {
-                printf("received disconnack from broker\n");
+            case DISCONN: {
+                printf("received disconn from broker\n");
                 break;
             }
 
@@ -322,5 +322,5 @@ int handle_suback() {
         return -1;
     }
 
-    return 0;
+    return 1;
 }

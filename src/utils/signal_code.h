@@ -8,7 +8,11 @@ enum signal_code {
     PUBACK = 4,             // message publish acknowlegdement
     NEWMES = 5,             // new message
     UNSUBACK = 6,           // unsubscribe topic acknowlegdement
-    DISCONNACK = 7,         // disconnect acknowlegdement
+    DISCONN = 7,            // disconnect
+    CONN = 8,               // connect
+    SUB = 9,                // topic subscribe
+    PUB = 10,               // message publish
+    UNSUB = 11,             // unsubscribe topic
     NAS = 0                 // not a signal
 };
 

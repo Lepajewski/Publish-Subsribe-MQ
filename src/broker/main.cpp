@@ -32,9 +32,9 @@ std::map<std::string, Topic*> topics;
 static void signal_handler(int signum);
 static void client_thread(Client* c);
 
-int handle_suback(Client* c);
-int handle_puback(Client* c);
-int handle_unsuback(Client* c);
+int handle_sub(Client* c);
+int handle_pub(Client* c);
+int handle_unsub(Client* c);
 
 void printf_verbose(const char* format, ...);
 
@@ -113,7 +113,7 @@ static void signal_handler(int signum) {
 
 	close(broker_sock);
 	for (Client* c : clients) {
-		send_disconnack(c->getSockFd());
+		send_disconn(c->getSockFd());
 		shutdown(c->getSockFd(), SHUT_RDWR);
 		close(c->getSockFd());
 		delete c;
@@ -128,7 +128,7 @@ static void signal_handler(int signum) {
 static void client_thread(Client *c) {
 	bool should_close = false;
 	
-	if (read_connack(c->getSockFd()) != 0) {
+	if (read_conn(c->getSockFd()) != 0) {
 		fprintf(stderr, "No connection acknowlegment from client\n");
 		should_close = true;
 	}
@@ -146,33 +146,33 @@ static void client_thread(Client *c) {
 		}
 
 		switch (char_to_signal_code(action_code)) {
-			case SUBACK: {
-				if (handle_suback(c) < 0) {
+			case SUB: {
+				if (handle_sub(c) < 0) {
 					fprintf(stderr, "Error with haldling suback from id: %d. Closing connection...\n", c->getId());
 					should_close = true;
 				}
 				break;
 			}
 			
-			case PUBACK: {
-				if (handle_puback(c) < 0) {
+			case PUB: {
+				if (handle_pub(c) < 0) {
 					fprintf(stderr, "Error with haldling puback from id: %d. Closing connection...\n", c->getId());
 					should_close = true;
 				}
 				break;
 			}
 
-			case UNSUBACK: {
-				if (handle_unsuback(c) < 0) {
+			case UNSUB: {
+				if (handle_unsub(c) < 0) {
 					fprintf(stderr, "Error with haldling unsuback from id: %d. Closing connection...\n", c->getId());
 					should_close = true;
 				}
 				break;
 			}
 
-			case DISCONNACK: {
+			case DISCONN: {
 				printf_verbose("----------------\n");
-				printf_verbose("Received DISCONNACK from %d\n", c->getId());
+				printf_verbose("Received DISCONN from %d\n", c->getId());
 				printf_verbose("----------------\n");
 				should_close = true;
 				break;
@@ -187,7 +187,7 @@ static void client_thread(Client *c) {
 		}
 	}
 
-	send_disconnack(c->getSockFd());
+	send_disconn(c->getSockFd());
 	close(c->getSockFd());
 
 	printf("Client disconnected: %s:%hu, id: %d\n", 
@@ -203,16 +203,18 @@ static void client_thread(Client *c) {
 	delete c;
 }
 
-int handle_suback(Client* c) {
+int handle_sub(Client* c) {
 	printf("----------------\n");
 
-	printf_verbose("Received SUBACK from id: %d\n", c->getId());
+	printf_verbose("Received SUB from id: %d\n", c->getId());
 	std::string topic_name;
-	if (read_suback(c->getSockFd(), topic_name) < 0) {
+	if (read_sub(c->getSockFd(), topic_name) < 0) {
 		send_suback(c->getSockFd(), SUBACK_FAILURE, NULL);
+		printf_verbose("SUB failed reading topic name\n");
+		printf("----------------\n");
 		return -1;
 	}
-	printf_verbose("Suback (id: %d) topic name: %s\n", c->getId(), topic_name.c_str());
+	printf_verbose("Sub (id: %d) topic name: %s\n", c->getId(), topic_name.c_str());
 
 	bool created = false;
 	if ( (created = (topics.count(topic_name) < 1)) ) {
@@ -231,13 +233,15 @@ int handle_suback(Client* c) {
 	return 0;
 }
 
-int handle_puback(Client* c) {
+int handle_pub(Client* c) {
 	printf("----------------\n");
 
 	printf_verbose("Received PUBACK from %d\n", c->getId());
 	std::string topic_name, message_content;
-	if (read_puback(c->getSockFd(), topic_name, message_content) < 0) {
+	if (read_pub(c->getSockFd(), topic_name, message_content) < 0) {
 		send_puback(c->getSockFd(), -1);
+		printf_verbose("PUB failed reading topic name and message content\n");
+		printf("----------------\n");
 		return -1;
 	}
 
@@ -260,14 +264,16 @@ int handle_puback(Client* c) {
 	return 0;
 }
 
-int handle_unsuback(Client* c) {
+int handle_unsub(Client* c) {
 	printf("----------------\n");
 
 	printf_verbose("Received UNSUBACK from %d\n", c->getId());
 	
 	std::string topic_name;
-	if (read_unsuback(c->getSockFd(), topic_name) < 0) {
+	if (read_unsub(c->getSockFd(), topic_name) < 0) {
 		send_unsuback(c->getSockFd(), UNSUBACK_FAILURE, "");
+		printf_verbose("UNSUB failed reading topic name\n");
+		printf("----------------\n");
 		return -1;
 	}
 

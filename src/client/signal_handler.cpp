@@ -1,7 +1,7 @@
 #include "signal_handler.h"
 
-void send_connack(int fd) {
-    char code = signal_code_to_char(CONNACK);
+void send_conn(int fd) {
+    char code = signal_code_to_char(CONN);
     write(fd, &code, 1);
 }
 
@@ -16,16 +16,16 @@ int read_connack(int fd, int& id) {
     return 0;
 }
 
-void send_suback(int fd, std::string name) {
-    char code = signal_code_to_char(SUBACK);
+void send_sub(int fd, std::string name) {
+    char code = signal_code_to_char(SUB);
     write(fd, &code, 1);
     size_t len = name.size();
     write(fd, &len, sizeof(len));
     write(fd, name.c_str(), len);
 }
 
-void send_puback(int fd, std::string topic_name, std::string message) {
-    char code = signal_code_to_char(PUBACK);
+void send_pub(int fd, std::string topic_name, std::string message) {
+    char code = signal_code_to_char(PUB);
     write(fd, &code, 1);
     size_t len = topic_name.size();
     write(fd, &len, sizeof(len));
@@ -35,16 +35,16 @@ void send_puback(int fd, std::string topic_name, std::string message) {
     write(fd, message.c_str(), len);
 }
 
-void send_unsuback(int fd, std::string topic_name) {
-    char code = signal_code_to_char(UNSUBACK);
+void send_unsub(int fd, std::string topic_name) {
+    char code = signal_code_to_char(UNSUB);
     write(fd, &code, 1);
     size_t len = topic_name.size();
     write(fd, &len, sizeof(len));
     write(fd, topic_name.c_str(), len);
 }
 
-void send_disconnack(int fd) {
-    char code = signal_code_to_char(DISCONNACK);
+void send_disconn(int fd) {
+    char code = signal_code_to_char(DISCONN);
     write(fd, &code, 1);
 }
 

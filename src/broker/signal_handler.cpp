@@ -6,17 +6,17 @@ void send_connack(int fd, int id) {
 	write(fd, &id, sizeof(id));
 }
 
-int read_connack(int fd) {
+int read_conn(int fd) {
     const int BUFF_SIZE = 100;
     char buf[BUFF_SIZE]{};
 	int len = read(fd, buf, 1);
-	if (len < 1 || char_to_signal_code(buf[0]) != CONNACK) {
+	if (len < 1 || char_to_signal_code(buf[0]) != CONN) {
 		return -1;
 	}
     return 0;
 }
 
-int read_suback(int fd, std::string &name) {
+int read_sub(int fd, std::string &name) {
     size_t name_len;
     if (read_type(fd, &name_len, sizeof(size_t)) < 0) {
         return -1;
@@ -52,7 +52,7 @@ void send_suback(int fd, suback_success_code success_code, Topic* topic) {
     }
 }
 
-int read_puback(int fd, std::string &topic_name, std::string &message_content) {
+int read_pub(int fd, std::string &topic_name, std::string &message_content) {
     size_t name_len;
     if (read_type(fd, &name_len, sizeof(size_t)) < 0) {
         return -1;
@@ -91,12 +91,12 @@ void send_newmes(int fd, std::string topic_name, int id, std::string message_con
     write(fd, message_content.c_str(), len);
 }
 
-void send_disconnack(int fd) {
-    char code = signal_code_to_char(DISCONNACK);
+void send_disconn(int fd) {
+    char code = signal_code_to_char(DISCONN);
     write(fd, &code, 1);
 }
 
-int read_unsuback(int fd, std::string &topic_name) {
+int read_unsub(int fd, std::string &topic_name) {
     size_t name_len;
     if (read_type(fd, &name_len, sizeof(size_t)) < 0) {
         return -1;
