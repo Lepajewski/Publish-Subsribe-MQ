@@ -28,4 +28,6 @@ int read_puback(int fd, int &id);
 
 int read_newmes(int fd, std::string &topic_name, int &id, std::string &content);
 
+int read_unsuback(int fd, unsuback_success_code &success);
+
 #endif

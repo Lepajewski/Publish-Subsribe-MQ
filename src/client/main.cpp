@@ -43,6 +43,7 @@ static void receiver_thread_body();
 int handle_suback();
 int handle_puback();
 int handle_newmes();
+int handle_unsuback();
 
 int main(int argc, char** argv) {
     if (argc < 2) {
@@ -316,7 +317,14 @@ static void receiver_thread_body() {
             }
 
             case UNSUBACK: {
-                printf("received unsuback from broker\n");
+                if (handle_unsuback() < 0) {
+                    fprintf(stderr, "Error handling unsuback.\n");
+                    should_close = true;
+                }
+                else {
+                    // signalize that main menu should be redrawn (show just unsubscribed topic) to change
+                    *first_frame = true;
+                }
                 break;
             }
 
@@ -382,6 +390,25 @@ int handle_newmes() {
     }
 
     subscribed_topics.at(topic_name)->add_message(id, content);
+
+    return 0;
+}
+
+int handle_unsuback() {
+    unsuback_success_code success;
+    std::string topic_name = unsub_awaiting_topics.front();
+    unsub_awaiting_topics.pop();
+
+    if (read_unsuback(sock_fd, success) < 0) {
+        return -1;
+    }
+
+    if (success == UNSUBACK_FAILURE) {
+        return 0;
+    }
+
+    delete subscribed_topics.at(topic_name);
+    subscribed_topics.erase(topic_name);
 
     return 0;
 }

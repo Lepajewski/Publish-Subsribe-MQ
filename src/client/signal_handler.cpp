@@ -109,3 +109,10 @@ int read_newmes(int fd, std::string &topic_name, int &id, std::string &content) 
     }
     return 0;
 }
+
+int read_unsuback(int fd, unsuback_success_code &success) {
+    if (read_type(fd, &success, sizeof(success)) < 0) {
+        return -1;
+    }
+    return 0;
+}
