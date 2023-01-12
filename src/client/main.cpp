@@ -177,7 +177,7 @@ void print_chat(Topic* topic) {
 
 void sub_to_topic(std::string name) {
     if (name == "") {
-        last_error = "No topic name given in agrument";
+        last_error = "No topic name given";
         return;
     }
     if (subscribed_topics.count(name) > 0) {
@@ -189,6 +189,10 @@ void sub_to_topic(std::string name) {
 }
 
 void open_topic(std::string name) {
+    if (name == "") {
+        last_error = "No topic name given";
+        return;
+    }
     int index = get_topic_index(subscribed_topics, name);
     if (index == -1) {
         last_error = "Topic is not in your subscribtion list";
@@ -201,11 +205,17 @@ void open_topic(std::string name) {
     std::map<std::string, Topic*>::iterator it = std::next(subscribed_topics.begin(), index);
     Topic* topic = it->second;
     bool should_close = false;
-    system("clear");
-    print_chat(topic);
     int action;
     std::string argument;
+    *first_frame = true;
     while (!should_close) {
+
+        if (*first_frame) {
+            system("clear");
+            print_chat(topic);
+            *first_frame = false;
+        }
+
         print_and_get_input(action, argument);
         switch (action) {
             case 1: {
@@ -284,6 +294,10 @@ static void receiver_thread_body() {
                 if (handle_puback() < 0) {
                     fprintf(stderr, "Error handling puback.\n");
                     should_close = true;
+                }
+                else {
+                    // signalize that main menu should be redrawn (show just subscribed topic) to change
+                    *first_frame = true;
                 }
                 break;
             }
