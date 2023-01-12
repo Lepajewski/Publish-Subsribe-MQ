@@ -10,7 +10,7 @@
 
 void send_conn(int fd);
 
-int read_connack(int fd, int& id);
+int read_connack(int fd, int &id);
 
 void send_sub(int fd, std::string name);
 
@@ -22,8 +22,8 @@ void send_disconn(int fd);
 
 int read_suback_success(int fd, suback_success_code &success);
 
-int read_suback_name(int fd, std::string &topic_name);
-
 int read_suback_messages(int fd, Topic* topic);
+
+int read_puback(int fd, int &id);
 
 #endif

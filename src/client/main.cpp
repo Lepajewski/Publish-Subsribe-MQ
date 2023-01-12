@@ -9,17 +9,20 @@
 #include <string>
 #include <sys/ioctl.h>
 #include <thread>
+#include <queue>
 
 #include "../utils/config_parser.h"
 #include "../utils/signal_code.h"
 #include "signal_handler.h"
 #include "topic.h"
 #include "user_input.h"
-#include "random_helper.h"
 
 int id;
 int sock_fd;
 std::map<std::string, Topic*> subscribed_topics;
+std::queue<std::string> awaiting_topic_messages;
+std::queue<std::string> awaiting_topics;
+std::queue<std::string> unsub_awaiting_topics;
 std::string last_error;
 std::string clear_line;
 
@@ -38,6 +41,7 @@ void unsub_from_topic(std::string name);
 static void receiver_thread_body();
 
 int handle_suback();
+int handle_puback();
 
 int main(int argc, char** argv) {
     if (argc < 2) {
@@ -180,6 +184,7 @@ void sub_to_topic(std::string name) {
         last_error = "Topic already subscribed";
         return;
     }
+    awaiting_topics.push(name);
     send_sub(sock_fd, name);
 }
 
@@ -226,6 +231,8 @@ void send_message(Topic* topic, std::string message) {
         last_error = "No message given";
         return;
     }
+    awaiting_topic_messages.push(topic->get_name());
+    topic->queue_message(message);
     send_pub(sock_fd, topic->get_name(), message);
 }
 
@@ -245,6 +252,7 @@ void unsub_from_topic(std::string name) {
     }
     std::map<std::string, Topic*>::iterator it = std::next(subscribed_topics.begin(), index);
     Topic* topic = it->second;
+    unsub_awaiting_topics.push(topic->get_name());
     send_unsub(sock_fd, topic->get_name());
 }
 
@@ -273,7 +281,10 @@ static void receiver_thread_body() {
             }
             
             case PUBACK: {
-                printf("received puback from broker\n");
+                if (handle_puback() < 0) {
+                    fprintf(stderr, "Error handling puback.\n");
+                    should_close = true;
+                }
                 break;
             }
 
@@ -302,17 +313,16 @@ static void receiver_thread_body() {
 
 int handle_suback() {
     suback_success_code success;
+
+    std::string topic_name = awaiting_topics.front();
+    awaiting_topics.pop();
+
     if (read_suback_success(sock_fd, success) < 0) {
         return -1;
     }
 
     if (success == SUBACK_FAILURE) {
         return 0;
-    }
-
-    std::string topic_name;
-    if (read_suback_name(sock_fd, topic_name) < 0) {
-        return -1;
     }
 
     Topic* t = new Topic(topic_name);
@@ -323,4 +333,19 @@ int handle_suback() {
     }
 
     return 1;
+}
+
+int handle_puback() {
+    int id;
+
+    std::string topic_name = awaiting_topic_messages.front();
+    awaiting_topic_messages.pop();
+
+    if (read_puback(sock_fd, id) < 0) {
+        return -1;
+    }
+
+    subscribed_topics.at(topic_name)->put_message(id);
+
+    return 0;
 }

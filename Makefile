@@ -6,7 +6,7 @@ build-broker:
 
 build-client:
 	mkdir -p bin
-	cd src/client && g++ ../utils/config_parser.cpp ../utils/signal_code.cpp ../utils/socket_io.cpp random_helper.cpp message.cpp topic.cpp signal_handler.cpp user_input.cpp main.cpp -pthread -o ../../bin/client -Wall -Wextra
+	cd src/client && g++ ../utils/config_parser.cpp ../utils/signal_code.cpp ../utils/socket_io.cpp message.cpp topic.cpp signal_handler.cpp user_input.cpp main.cpp -pthread -o ../../bin/client -Wall -Wextra
 
 run-broker:
 	./bin/broker config.conf

@@ -5,14 +5,16 @@ void send_conn(int fd) {
     write(fd, &code, 1);
 }
 
-int read_connack(int fd, int& id) {
+int read_connack(int fd, int &id) {
     char buff;
     id = 0;
     int n = read(fd, &buff, 1);
     if (n < 1 || char_to_signal_code(buff) != CONNACK ) {
         return -1;
     }
-    read(fd, &id, sizeof(int));
+    if (read_type(fd, &id, sizeof(id)) < 0) {
+        return -1;
+    }
     return 0;
 }
 
@@ -55,17 +57,6 @@ int read_suback_success(int fd, suback_success_code &success) {
     return 0;
 }
 
-int read_suback_name(int fd, std::string &topic_name) {
-    size_t len;
-    if (read_type(fd, &len, sizeof(len)) < 0) {
-        return -1;
-    }
-    if (read_string(fd, topic_name, len) < 0) {
-        return -1;
-    }
-    return 0;
-}
-
 int read_suback_messages(int fd, Topic* topic) {
     size_t n;
     size_t len;
@@ -88,6 +79,13 @@ int read_suback_messages(int fd, Topic* topic) {
         }
 
         topic->add_message(id, content);
+    }
+    return 0;
+}
+
+int read_puback(int fd, int &id) {
+    if (read_type(fd, &id, sizeof(id)) < 0) {
+        return -1;
     }
     return 0;
 }

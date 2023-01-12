@@ -18,13 +18,11 @@ kolejność danych w przesyłanych danych:
     - suback od brokera                                             D - ND
         2. kod powodzenia subskrybcji (jakieś 0 lub 1 czy coś)      (suback_success_code)
         ----- tylko jeśli 2. nie jest SUBACK_FAILURE
-        3. długość nazwy topicu                                     (size_t)
-        4. nazwa topicu
-        5. ilość wiadomości w topicu                                (size_t)
+        3. ilość wiadomości w topicu                                (size_t)
         dla każdej wiadomości w topicu {
-            6. id wiadomości                                        (int)
-            7. długość wiadomości                                   (size_t)
-            8. wiadomość
+            4. id wiadomości                                        (int)
+            5. długość wiadomości                                   (size_t)
+            6. wiadomość
         }
 
     - puback od brokera                                             D - ND
@@ -49,8 +47,6 @@ kolejność danych w przesyłanych danych:
 
     - unsuback od brokera                                           D - ND
         2. kod powodzenia desubskrybcji                             (unsuback_success_code)
-        3. długość nazwy topicu                                     (size_t)
-        4. nazwa topicu
 
     - disconn od klienta                                            D - D
         pusty sygnał

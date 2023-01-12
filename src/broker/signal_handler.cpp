@@ -37,11 +37,7 @@ void send_suback(int fd, suback_success_code success_code, Topic* topic) {
         return;
     }
 
-    size_t len = topic->get_name().size();
-    write(fd, &len, sizeof(len));
-    write(fd, topic->get_name().c_str(), len);
-
-    len = topic->get_messages().size();
+    size_t len = topic->get_messages().size();
     write(fd, &len, sizeof(len));
     for (auto m : topic->get_messages()) {
         write(fd, &m.id, sizeof(m.id));
@@ -107,17 +103,9 @@ int read_unsub(int fd, std::string &topic_name) {
     return 0;
 }
 
-void send_unsuback(int fd, unsuback_success_code success_code, std::string topic_name) {
+void send_unsuback(int fd, unsuback_success_code success_code) {
     char code = signal_code_to_char(UNSUBACK);
     write(fd, &code, 1);
 
     write(fd, &success_code, sizeof(success_code));
-
-    if (success_code == UNSUBACK_FAILURE) {
-        return;
-    }
-
-    size_t len = topic_name.size();
-    write(fd, &len, sizeof(len));
-    write(fd, topic_name.c_str(), len);
 }

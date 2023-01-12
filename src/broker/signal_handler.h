@@ -27,6 +27,6 @@ void send_disconn(int fd);
 
 int read_unsub(int fd, std::string &topic_name);
 
-void send_unsuback(int fd, unsuback_success_code success_code, std::string topic_name);
+void send_unsuback(int fd, unsuback_success_code success_code);
 
 #endif

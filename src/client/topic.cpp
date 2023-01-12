@@ -23,3 +23,13 @@ void Topic::print_messages() {
 int Topic::get_messages_lenght() {
     return this->messages.size();
 }
+
+void Topic::queue_message(std::string content) {
+    this->awaiting_messages.push(content);
+}
+
+void Topic::put_message(int id) {
+    std::string content = this->awaiting_messages.front();
+    this->awaiting_messages.pop();
+    this->add_message(id, content);
+}
