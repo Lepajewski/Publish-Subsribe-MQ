@@ -89,3 +89,23 @@ int read_puback(int fd, int &id) {
     }
     return 0;
 }
+
+int read_newmes(int fd, std::string &topic_name, int &id, std::string &content) {
+    size_t len;
+    if (read_type(fd, &len, sizeof(len)) < 0) {
+        return -1;
+    }
+    if (read_string(fd, topic_name, len) < 0) {
+        return -1;
+    }
+    if (read_type(fd, &id, sizeof(id)) < 0) {
+        return -1;
+    }
+    if (read_type(fd, &len, sizeof(len)) < 0) {
+        return -1;
+    }
+    if (read_string(fd, content, len) < 0) {
+        return -1;
+    }
+    return 0;
+}

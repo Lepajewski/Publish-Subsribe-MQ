@@ -26,4 +26,6 @@ int read_suback_messages(int fd, Topic* topic);
 
 int read_puback(int fd, int &id);
 
+int read_newmes(int fd, std::string &topic_name, int &id, std::string &content);
+
 #endif

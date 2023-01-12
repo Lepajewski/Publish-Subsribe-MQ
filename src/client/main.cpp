@@ -42,6 +42,7 @@ static void receiver_thread_body();
 
 int handle_suback();
 int handle_puback();
+int handle_newmes();
 
 int main(int argc, char** argv) {
     if (argc < 2) {
@@ -296,14 +297,21 @@ static void receiver_thread_body() {
                     should_close = true;
                 }
                 else {
-                    // signalize that main menu should be redrawn (show just subscribed topic) to change
+                    // signalize that main menu should be redrawn (show just published message) to change
                     *first_frame = true;
                 }
                 break;
             }
 
             case NEWMES: {
-                printf("received newmes from broker \n");
+                if (handle_newmes() < 0) {
+                    fprintf(stderr, "Error handling newmes.\n");
+                    should_close = true;
+                }
+                else {
+                    // idk what to do here now
+                    *first_frame = true;
+                }
                 break;
             }
 
@@ -360,6 +368,20 @@ int handle_puback() {
     }
 
     subscribed_topics.at(topic_name)->put_message(id);
+
+    return 0;
+}
+
+int handle_newmes() {
+    int id;
+    std::string topic_name;
+    std::string content;
+
+    if (read_newmes(sock_fd, topic_name, id, content) < 0) {
+        return -1;
+    }
+
+    subscribed_topics.at(topic_name)->add_message(id, content);
 
     return 0;
 }
