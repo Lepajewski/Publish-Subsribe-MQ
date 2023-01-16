@@ -10,6 +10,14 @@ Client::Client(int id, int fd, float keepalive, sockaddr_in addr) {
 
 Client::~Client() {
     printf("POLAKI CEBULAKI %d\n", this->id);
+
+    if (this->thread.joinable()) {
+        this->thread.join();
+    }
+}
+
+void Client::disconnect() {
+    send_disconn(this->sock_fd);
     shutdown(this->sock_fd, SHUT_RDWR);
 	close(this->sock_fd);
 }

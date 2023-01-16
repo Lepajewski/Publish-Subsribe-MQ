@@ -97,9 +97,7 @@ int main(int argc, char** argv) {
 		}
 
 		// start thread on new client
-		std::thread new_client_thread(client_thread, c);
-
-		new_client_thread.detach();
+		c->thread = std::thread(client_thread, c);
 	}
 	
 	// close socket descriptors
@@ -111,13 +109,11 @@ int main(int argc, char** argv) {
 static void signal_handler(int signum) {
 	printf("\nKeyboard Interrupt ...closing socket\n");
 
-	close(broker_sock);
 	for (Client* c : clients) {
-		send_disconn(c->getSockFd());
-		shutdown(c->getSockFd(), SHUT_RDWR);
-		close(c->getSockFd());
-		delete c;
+		c->disconnect();
 	}
+	clients.clear();
+	close(broker_sock);
 
 	for (auto t : topics) {
 		delete t.second;
@@ -188,7 +184,6 @@ static void client_thread(Client *c) {
 	}
 
 	send_disconn(c->getSockFd());
-	close(c->getSockFd());
 
 	printf("Client disconnected: %s:%hu, id: %d\n", 
 			inet_ntoa(c->getAddrInfo().sin_addr),
@@ -199,6 +194,8 @@ static void client_thread(Client *c) {
 	// here will be semaphore take
 	clients.erase(c);
 	// here will be semaphore release
+
+	c->disconnect();
 
 	delete c;
 }

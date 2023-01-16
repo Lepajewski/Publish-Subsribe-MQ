@@ -3,6 +3,9 @@
 
 #include <unistd.h>
 #include <netinet/in.h>
+#include <thread>
+
+#include "signal_handler.h"
 
 
 class Client {
@@ -11,8 +14,11 @@ class Client {
     float keepalive;
     sockaddr_in client_addr;
 public:
+    std::thread thread;
+
     Client(int id, int fd, float keepalive, sockaddr_in addr);
     ~Client();
+    void disconnect();
     int getId();
     int getSockFd();
     float getKeepalive();

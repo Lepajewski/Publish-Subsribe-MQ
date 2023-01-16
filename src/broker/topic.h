@@ -7,6 +7,8 @@
 #include <vector>
 #include <set>
 
+class Client;
+
 class Topic {
 private:
     std::string name;

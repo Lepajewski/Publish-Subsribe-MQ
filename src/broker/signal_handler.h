@@ -9,6 +9,8 @@
 #include "../utils/signal_code.h"
 #include "../utils/socket_io.h"
 
+class Topic;
+
 void send_connack(int fd, int id);
 
 int read_conn(int fd);
