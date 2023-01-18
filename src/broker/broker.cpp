@@ -100,21 +100,29 @@ void Broker::loop() {
 }
 
 int Broker::get_new_id() {
-    int id = 1;
+	std::lock_guard<std::mutex> lock_sub(this->subscribe_mutex);
 
+	std::vector<int> taken_ids;
     for (auto &it : this->clients) {
-        if (id == it->get_id()) {
-            id++;
-        } else {
-            id = it->get_id();
-            break;
+        if (!it->get_should_close()) {
+            taken_ids.push_back(it->get_id());
         }
     }
+
+	std::sort(taken_ids.begin(), taken_ids.end());
+
+    int id = 1;
+	for (int i : taken_ids) {
+		if (id == i) {
+			id++;
+		}
+	}
 
     return id;
 }
 
 std::pair<Topic*, bool> Broker::subscribe_client_to_topic(Client* client, std::string name) {
+	std::lock_guard<std::mutex> lock_sub(this->subscribe_mutex);
     bool created = false;
     if ( (created = (this->topics.count(name) < 1)) ) {
 		Topic* t = new Topic(name);
@@ -127,8 +135,10 @@ std::pair<Topic*, bool> Broker::subscribe_client_to_topic(Client* client, std::s
 }
 
 int Broker::send_message(Client* client, std::string topic_name, std::string content) {
+	std::lock_guard<std::mutex> lock_sub(this->message_mutex);
     int id = this->topics.at(topic_name)->add_message(content);
 
+	std::lock_guard<std::mutex> lock_mes(this->subscribe_mutex);
     this->printf_verbose("Sending newmes to subscribers:\n");
 	for (auto c : topics.at(topic_name)->get_subscribers()) {
 		if (c == client) {
@@ -142,6 +152,7 @@ int Broker::send_message(Client* client, std::string topic_name, std::string con
 }
 
 void Broker::unsubscribe(Client* client, std::string name) {
+	std::lock_guard<std::mutex> lock_sub(this->subscribe_mutex);
     if (topics.at(name)->unsubscribe_client(client) == 0) {
 		this->printf_verbose("No subscribers in topic: '%s'\n", name.c_str());
 	}

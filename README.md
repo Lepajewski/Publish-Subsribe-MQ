@@ -27,7 +27,7 @@ Szymon Kaczmarek 148056
 
 # Client functionalities
 
-- read and parse config file (gets ip and port from there)
+- read and parse config file (gets broker ip and port from there)
 - connect to a broker
 - subscribe multiple topics
 - publish message on given topic
@@ -39,7 +39,7 @@ Config can be adjusted in ``config.conf`` file.
 Inside given values can be configured:
 - ADDRESS xx.xx.xx.xx - broker ip address
 - PORT xxxx - broker port
-- MAX_CLIENTS x - maximum amount of clients that can be connected at the same time
+- MAX_CLIENTS x - maximum amount of clients that can wait for connection accept at the same time
 - VERBOSE (true/false) - if set to true, broker will give additional information in the terminal when running
 
 # Signals

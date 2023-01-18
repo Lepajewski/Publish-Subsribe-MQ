@@ -8,6 +8,8 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <mutex>
+#include <algorithm>
 
 #include "../utils/config_parser.h"
 #include "topic.h"
@@ -21,6 +23,9 @@ private:
     std::set<Client*> clients;
     std::map<std::string, Topic*> topics;
     Config cfg;
+
+    std::mutex subscribe_mutex;
+    std::mutex message_mutex;
 
     int sock_fd;
 
