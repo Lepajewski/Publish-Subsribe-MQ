@@ -2,9 +2,24 @@
 
 Broker::Broker(const char * config_path) {
     this->cfg = parse_config(config_path);
+	this->should_close = new bool;
+	*this->should_close = true;
 }
 
 Broker::~Broker() {
+	*this->should_close = true;
+	if (this->main_thread.joinable()) {
+		this->main_thread.join();
+	}
+
+    shutdown(this->sock_fd, SHUT_RDWR);
+    close(this->sock_fd);
+
+	if (this->accept_thread.joinable()) {
+		this->accept_thread.join();
+	}
+	delete this->should_close;
+
     for (Client* c : this->clients) {
 		delete c;
 	}
@@ -13,11 +28,11 @@ Broker::~Broker() {
 		delete t.second;
 	}
 
-    shutdown(this->sock_fd, SHUT_RDWR);
-    close(this->sock_fd);
 }
 
 int Broker::init() {
+	*this->should_close = false;
+
     sockaddr_in addr = {};
 	addr.sin_family = AF_INET;
 	addr.sin_addr.s_addr = this->cfg.address.s_addr;
@@ -55,6 +70,9 @@ int Broker::init() {
 	}
     this->printf_verbose("Started listening\n");
 
+	this->accept_thread = std::thread(&Broker::accept_thread_body, this);
+	this->main_thread = std::thread(&Broker::main_thread_body, this);
+
     return 0;
 }
 
@@ -64,9 +82,13 @@ void Broker::accept_client() {
 
 	int client_sock = accept(this->sock_fd, (sockaddr*) &client_addr, &client_addr_size);
 	if (client_sock == -1) {
-		perror("Client accept failed");
+		if (!*this->should_close) {
+			this->printf_verbose("Client accept failed : %s\n", strerror(errno));
+		}
+		return;
 	}
 
+	std::lock_guard<std::mutex> lock_con(this->connect_mutex);
 	Client* c = new Client(this, client_sock, client_addr, 60.0);
 	this->clients.insert(c);
 
@@ -82,26 +104,44 @@ void Broker::accept_client() {
 void Broker::remove_client() {
     std::set<Client*> to_remove;
 
+	std::lock_guard<std::mutex> lock_con(this->connect_mutex);
     for (Client* c : this->clients) {
         if (c->get_should_close()) {
             to_remove.insert(c);
         }
     }
 
+	std::lock_guard<std::mutex> lock_sub(this->subscribe_mutex);
     for (Client* c : to_remove) {
+		for (auto [n, t] : this->topics) {
+			t->unsubscribe_client(c);
+		}
         this->clients.erase(c);
         delete c;
     }
 }
 
-void Broker::loop() {
-    this->remove_client();
-    this->accept_client();
+void Broker::time_update() {
+	std::lock_guard<std::mutex> lock_sub(this->subscribe_mutex);
+	for (auto [name, topic] : this->topics) {
+		topic->time_update();
+	}
+}
+
+void Broker::accept_thread_body() {
+	while (!*this->should_close) {
+		this->accept_client();
+	}
+}
+
+void Broker::main_thread_body() {
+	while (!*this->should_close) {
+		this->remove_client();
+		this->time_update();
+	}
 }
 
 int Broker::get_new_id() {
-	std::lock_guard<std::mutex> lock_sub(this->subscribe_mutex);
-
 	std::vector<int> taken_ids;
     for (auto &it : this->clients) {
         if (!it->get_should_close()) {
@@ -122,26 +162,27 @@ int Broker::get_new_id() {
 }
 
 std::pair<Topic*, bool> Broker::subscribe_client_to_topic(Client* client, std::string name) {
-	std::lock_guard<std::mutex> lock_sub(this->subscribe_mutex);
+	std::unique_lock<std::mutex> lock_sub(this->subscribe_mutex);
     bool created = false;
     if ( (created = (this->topics.count(name) < 1)) ) {
 		Topic* t = new Topic(name);
-		topics.insert({name, t});
+		this->topics.insert({name, t});
 		this->printf_verbose("Topic '%s' created\n", name.c_str());
 	}
+	lock_sub.unlock();
 
-    topics.at(name)->subscribe_client(client);
+    this->topics.at(name)->subscribe_client(client);
     return {topics.at(name), created};
 }
 
 int Broker::send_message(Client* client, std::string topic_name, std::string content) {
-	std::lock_guard<std::mutex> lock_sub(this->message_mutex);
-    int id = this->topics.at(topic_name)->add_message(content);
+	Topic* t = this->topics.at(topic_name);
+    int id = t->add_message(content);
 
-	std::lock_guard<std::mutex> lock_mes(this->subscribe_mutex);
+	std::lock_guard<std::mutex> lock_sub(t->subscribe_mutex);
     this->printf_verbose("Sending newmes to subscribers:\n");
-	for (auto c : topics.at(topic_name)->get_subscribers()) {
-		if (c == client) {
+	for (auto c : t->get_subscribers()) {
+		if (c == client || c->get_should_close()) {
 			continue;
 		}
 		send_newmes(c->get_sock_fd(), topic_name, id, content);
@@ -152,10 +193,13 @@ int Broker::send_message(Client* client, std::string topic_name, std::string con
 }
 
 void Broker::unsubscribe(Client* client, std::string name) {
-	std::lock_guard<std::mutex> lock_sub(this->subscribe_mutex);
-    if (topics.at(name)->unsubscribe_client(client) == 0) {
+    if (this->topics.at(name)->unsubscribe_client(client) == 0) {
 		this->printf_verbose("No subscribers in topic: '%s'\n", name.c_str());
 	}
+}
+
+bool Broker::get_should_close() {
+	return *this->should_close;
 }
 
 void Broker::printf_verbose(const char* format, ...) {

@@ -39,12 +39,12 @@ void send_suback(int fd, suback_success_code success_code, Topic* topic) {
 
     size_t len = topic->get_messages().size();
     write(fd, &len, sizeof(len));
-    for (auto m : topic->get_messages()) {
-        write(fd, &m.id, sizeof(m.id));
+    for (Message* m : topic->get_messages()) {
+        write(fd, &m->id, sizeof(m->id));
 
-        len = m.content.size();
+        len = m->content.size();
         write(fd, &len, sizeof(len));
-        write(fd, m.content.c_str(), len);
+        write(fd, m->content.c_str(), len);
     }
 }
 

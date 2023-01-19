@@ -50,5 +50,5 @@ kolejność danych w przesyłanych danych:
 
     - disconn od klienta                                            D - D
         pusty sygnał
-    - disconn od brokera                                            D - ND
+    - disconn od brokera                                            D - D
         pusty sygnał

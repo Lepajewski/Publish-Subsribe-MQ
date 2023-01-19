@@ -10,6 +10,7 @@
 #include <arpa/inet.h>
 #include <mutex>
 #include <algorithm>
+#include <thread>
 
 #include "../utils/config_parser.h"
 #include "topic.h"
@@ -24,18 +25,25 @@ private:
     std::map<std::string, Topic*> topics;
     Config cfg;
 
+    std::mutex connect_mutex;
     std::mutex subscribe_mutex;
-    std::mutex message_mutex;
+
+    std::thread accept_thread;
+    std::thread main_thread;
 
     int sock_fd;
+    bool* should_close;
 
     void accept_client();
     void remove_client();
+    void time_update();
+
+    void accept_thread_body();
+    void main_thread_body();
 public:
     Broker(const char * config_path);
     ~Broker();
-
-    void loop();
+    
     int init();
 
     int get_new_id();
@@ -43,6 +51,7 @@ public:
     int send_message(Client* client, std::string topic_name, std::string content);
     void unsubscribe(Client* client, std::string name);
 
+    bool get_should_close();
     void printf_verbose(const char* format, ...);
     void print_clients();
 };

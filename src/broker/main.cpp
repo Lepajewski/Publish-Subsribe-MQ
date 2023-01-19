@@ -22,15 +22,9 @@ int main(int argc, char** argv) {
 
 	printf("Broker running...\n");
 
-	// setup signal handler
 	signal(SIGINT, signal_handler);
 
-
-	// main broker loop
-	bool should_close = false;
-	while (!should_close) {
-		broker->loop();
-	}
+	while (!broker->get_should_close()) {}
 
 	delete broker;
 

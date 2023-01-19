@@ -9,7 +9,6 @@ void Client::client_thread_body() {
 		send_connack(this->sock_fd, this->id);
 	}
 
-	// main client loop
 	char action_code;
 	while (!*this->should_close) {
 		int len = read(this->sock_fd, &action_code, 1);
@@ -92,7 +91,7 @@ int Client::handle_sub() {
 int Client::handle_pub() {
 	printf("----------------\n");
 
-	this->broker->printf_verbose("Received PUBACK from %d\n", this->id);
+	this->broker->printf_verbose("Received PUB from %d\n", this->id);
 	std::string topic_name, message_content;
 	if (read_pub(this->sock_fd, topic_name, message_content) < 0) {
 		send_puback(this->sock_fd, -1);
