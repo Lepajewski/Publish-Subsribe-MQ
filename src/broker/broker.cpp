@@ -169,7 +169,8 @@ int Broker::get_new_id() {
 }
 
 std::pair<Topic*, bool> Broker::subscribe_client_to_topic(Client* client, std::string name) { 
-	bool created = false; 
+	bool created = false;
+	Topic* t;
 	{
 		std::lock_guard<std::mutex> lock_sub(this->subscribe_mutex);
 		if ( (created = (this->topics.count(name) < 1)) ) {
@@ -177,31 +178,31 @@ std::pair<Topic*, bool> Broker::subscribe_client_to_topic(Client* client, std::s
 			this->topics.insert({name, t});
 			this->printf_verbose("Topic '%s' created\n", name.c_str());
 		}
+		t = this->topics.at(name);
 	}
 
-    this->topics.at(name)->subscribe_client(client);
-    return {topics.at(name), created};
+    t->subscribe_client(client);
+    return {t, created};
 }
 
 int Broker::send_message(Client* client, std::string topic_name, std::string content) {
-	Topic* t = this->topics.at(topic_name);
-    int id = t->add_message(content);
-
-	std::lock_guard<std::mutex> lock_sub(t->subscribe_mutex);
-    this->printf_verbose("Sending newmes to subscribers:\n");
-	for (auto c : t->get_subscribers()) {
-		if (c == client || c->get_should_close()) {
-			continue;
-		}
-		send_newmes(c->get_sock_fd(), topic_name, id, content);
-		this->printf_verbose("Sent newmes to id: %d\n", c->get_id());
+	Topic* t;
+	{
+		std::lock_guard<std::mutex> lock_sub(this->subscribe_mutex);
+		t = this->topics.at(topic_name);
 	}
 
-    return id;
+    return t->send_message(client, content);
 }
 
 void Broker::unsubscribe(Client* client, std::string name) {
-    if (this->topics.at(name)->unsubscribe_client(client) == 0) {
+	Topic* t;
+	{
+		std::lock_guard<std::mutex> lock_sub(this->subscribe_mutex);
+		t = this->topics.at(name);
+	}
+
+    if (t->unsubscribe_client(client) == 0) {
 		this->printf_verbose("No subscribers in topic: '%s'\n", name.c_str());
 	}
 }

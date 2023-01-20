@@ -12,12 +12,15 @@
 #include <mutex>
 
 #include "broker.h"
-#include "signal_handler.h"
+#include "topic.h"
+#include "../utils/signal_code.h"
+#include "../utils/socket_io.h"
 #include "../utils/config_parser.h"
 
 #define PING_WAIT_TIME 5 //seconds
 
 class Broker;
+class Topic;
 
 class Client {
     Broker* broker;
@@ -40,10 +43,27 @@ class Client {
     int handle_pub();
     int handle_unsub();
 
+    void send_connack(int id);
+    int read_conn();
+
+    void send_ping();
+
+    int read_sub(std::string &name);
+    void send_suback(suback_success_code success_code, Topic* topic);
+
+    int read_pub(std::string &topic_name, std::string &message_content);
+    void send_puback(int id);
+
+    void send_disconn();
+
+    int read_unsub(std::string &topic_name);
+    void send_unsuback(unsuback_success_code success_code);
+
     void disconnect();
 public:
     Client(Broker* broker, int fd, sockaddr_in addr, time_t ping_every_seconds);
     ~Client();
+    void send_newmes(std::string topic_name, int id, std::string message_content);
     int get_id();
     int get_sock_fd();
     sockaddr_in get_addr_info();

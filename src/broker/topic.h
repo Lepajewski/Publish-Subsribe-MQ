@@ -19,14 +19,16 @@ private:
     std::vector<Message*> messages;
     std::set<Client*> subscribers;
     int get_new_id();
+    int add_message(std::string message);
+    void notify_subscribers(Client* client, int id, std::string content);
 public:
     std::mutex message_mutex;
     std::mutex subscribe_mutex;
 
     Topic(std::string name);
     ~Topic();
-    int add_message(std::string message);
     void subscribe_client(Client* client);
+    int send_message(Client* client, std::string content);
     std::string get_name();
     std::vector<Message*> get_messages();
     std::set<Client*> get_subscribers();

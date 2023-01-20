@@ -1,12 +1,12 @@
 #include "client.h"
 
 void Client::client_thread_body() {	
-	if (read_conn(this->sock_fd) != 0) {
+	if (this->read_conn() != 0) {
 		fprintf(stderr, "No connection request signal sent from client\n");
 		*this->should_close = true;
 	}
 	else {
-		send_connack(this->sock_fd, this->id);
+		this->send_connack(this->id);
 	}
 
 	char action_code;
@@ -88,8 +88,8 @@ int Client::handle_sub() {
 
 	this->broker->printf_verbose("Received SUB from id: %d\n", this->id);
 	std::string topic_name;
-	if (read_sub(this->sock_fd, topic_name) < 0) {
-		send_suback(this->sock_fd, SUBACK_FAILURE, NULL);
+	if (this->read_sub(topic_name) < 0) {
+		this->send_suback(SUBACK_FAILURE, NULL);
 		this->broker->printf_verbose("SUB failed reading topic name\n");
 		printf("----------------\n");
 		return -1;
@@ -101,7 +101,7 @@ int Client::handle_sub() {
 	printf("Id: %d subscribed to '%s'\n", this->id, topic_name.c_str());
 
 	suback_success_code code = created ? SUBACK_CREATE : SUBACK_SUBSCRIBE;
-	send_suback(this->sock_fd, code, topic);
+	this->send_suback(code, topic);
 
 	printf("----------------\n");
 	return 0;
@@ -112,8 +112,8 @@ int Client::handle_pub() {
 
 	this->broker->printf_verbose("Received PUB from %d\n", this->id);
 	std::string topic_name, message_content;
-	if (read_pub(this->sock_fd, topic_name, message_content) < 0) {
-		send_puback(this->sock_fd, -1);
+	if (this->read_pub(topic_name, message_content) < 0) {
+		this->send_puback(-1);
 		this->broker->printf_verbose("PUB failed reading topic name and message content\n");
 		printf("----------------\n");
 		return -1;
@@ -122,7 +122,7 @@ int Client::handle_pub() {
 	printf("Id: %d send a message: '%s' to the topic: '%s'\n", this->id, message_content.c_str(), topic_name.c_str());
 
 	int id = this->broker->send_message(this, topic_name, message_content);
-	send_puback(this->sock_fd, id);
+	this->send_puback(id);
 	this->broker->printf_verbose("Sent puback to id: %d\n", this->id);
 
 	printf("----------------\n");
@@ -135,8 +135,8 @@ int Client::handle_unsub() {
 	this->broker->printf_verbose("Received UNSUBACK from %d\n", this->id);
 	
 	std::string topic_name;
-	if (read_unsub(this->sock_fd, topic_name) < 0) {
-		send_unsuback(this->sock_fd, UNSUBACK_FAILURE);
+	if (this->read_unsub(topic_name) < 0) {
+		this->send_unsuback(UNSUBACK_FAILURE);
 		this->broker->printf_verbose("UNSUB failed reading topic name\n");
 		printf("----------------\n");
 		return -1;
@@ -144,7 +144,7 @@ int Client::handle_unsub() {
 
 	printf("Id: %d unsubscribed from topic: '%s'\n", this->id, topic_name.c_str());
     this->broker->unsubscribe(this, topic_name);
-	send_unsuback(this->sock_fd, UNSUBACK_SUCCESS);
+	this->send_unsuback(UNSUBACK_SUCCESS);
 
 	printf("----------------\n");
 	return 0;

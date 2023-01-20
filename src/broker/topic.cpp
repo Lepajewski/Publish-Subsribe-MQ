@@ -18,6 +18,22 @@ int Topic::add_message(std::string message) {
     return id;
 }
 
+void Topic::notify_subscribers(Client* client, int id, std::string content) {
+    std::lock_guard<std::mutex> lock_sub(this->subscribe_mutex);
+	for (auto c : this->subscribers) {
+		if (c == client || c->get_should_close()) {
+			continue;
+		}
+		c->send_newmes(this->name, id, content);
+	}
+}
+
+int Topic::send_message(Client* client, std::string content) {
+    int id = this->add_message(content);
+    this->notify_subscribers(client, id, content);
+    return id;
+}
+
 void Topic::subscribe_client(Client* client) {
     std::lock_guard<std::mutex> lock_sub(this->subscribe_mutex);
     this->subscribers.insert(client);
