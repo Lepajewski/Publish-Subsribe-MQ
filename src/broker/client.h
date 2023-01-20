@@ -9,6 +9,7 @@
 #include <thread>
 #include <stdarg.h>
 #include <time.h>
+#include <mutex>
 
 #include "broker.h"
 #include "signal_handler.h"
@@ -27,6 +28,7 @@ class Client {
     time_t ping_every_seconds;
     sockaddr_in client_addr;
     std::thread client_thread;
+    std::mutex disconnect_mutex;
 
     bool* should_close;
 

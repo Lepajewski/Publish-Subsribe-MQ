@@ -31,9 +31,15 @@ Client::~Client() {
 }
 
 void Client::disconnect() {
+    std::lock_guard<std::mutex> lock_discon(this->disconnect_mutex);
+    if (this->sock_fd < 0) {
+        return;
+    }
+
     send_disconn(this->sock_fd);
     shutdown(this->sock_fd, SHUT_RDWR);
 	close(this->sock_fd);
+    this->sock_fd = -1;
 }
 
 int Client::get_id() {

@@ -123,10 +123,11 @@ void Client::disconnect() {
         this->receiver_thread.join();
     }
 
-    for (auto t : this->subscribed_topics)
+    for (auto [n, t] : this->subscribed_topics)
     {
-        delete t.second;
+        delete t;
     }
+    this->subscribed_topics.clear();
 
     if (this->sock_fd > 0) {
         shutdown(this->sock_fd, SHUT_RDWR);
@@ -144,7 +145,9 @@ bool Client::get_should_close() {
 }
 
 bool Client::get_new_data() {
-    return *this->new_data;
+    bool r = *this->new_data;
+    *this->new_data = false;
+    return r;
 }
 
 int Client::get_id() {
