@@ -89,7 +89,7 @@ void Broker::accept_client() {
 	}
 
 	std::lock_guard<std::mutex> lock_con(this->connect_mutex);
-	Client* c = new Client(this, client_sock, client_addr, 60.0);
+	Client* c = new Client(this, client_sock, client_addr, this->cfg.ping_after);
 	this->clients.insert(c);
 
     if (this->cfg.verbose) {
@@ -122,9 +122,16 @@ void Broker::remove_client() {
 }
 
 void Broker::time_update() {
-	std::lock_guard<std::mutex> lock_sub(this->subscribe_mutex);
-	for (auto [name, topic] : this->topics) {
-		topic->time_update();
+	{
+		std::lock_guard<std::mutex> lock_sub(this->subscribe_mutex);
+		for (auto [name, topic] : this->topics) {
+			topic->time_update();
+		}
+	}
+
+	std::lock_guard<std::mutex> lock_con(this->connect_mutex);
+	for (Client* c : this->clients) {
+		c->time_update();
 	}
 }
 
@@ -161,15 +168,16 @@ int Broker::get_new_id() {
     return id;
 }
 
-std::pair<Topic*, bool> Broker::subscribe_client_to_topic(Client* client, std::string name) {
-	std::unique_lock<std::mutex> lock_sub(this->subscribe_mutex);
-    bool created = false;
-    if ( (created = (this->topics.count(name) < 1)) ) {
-		Topic* t = new Topic(name);
-		this->topics.insert({name, t});
-		this->printf_verbose("Topic '%s' created\n", name.c_str());
+std::pair<Topic*, bool> Broker::subscribe_client_to_topic(Client* client, std::string name) { 
+	bool created = false; 
+	{
+		std::lock_guard<std::mutex> lock_sub(this->subscribe_mutex);
+		if ( (created = (this->topics.count(name) < 1)) ) {
+			Topic* t = new Topic(name);
+			this->topics.insert({name, t});
+			this->printf_verbose("Topic '%s' created\n", name.c_str());
+		}
 	}
-	lock_sub.unlock();
 
     this->topics.at(name)->subscribe_client(client);
     return {topics.at(name), created};

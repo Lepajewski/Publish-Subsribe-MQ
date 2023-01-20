@@ -8,7 +8,7 @@ kolejność danych w przesyłanych danych:
     - connack od brokera                                            D - D
         2. wygenerowane id klienta                                  (int)
 
-    - ping od brokera i klienta                                     ND - ND
+    - ping od brokera i klienta                                     D - D
         pusta wiadomość budząca
 
     - sub od klienta                                                D - D

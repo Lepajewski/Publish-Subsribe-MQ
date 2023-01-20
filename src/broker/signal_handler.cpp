@@ -7,13 +7,17 @@ void send_connack(int fd, int id) {
 }
 
 int read_conn(int fd) {
-    const int BUFF_SIZE = 100;
-    char buf[BUFF_SIZE]{};
-	int len = read(fd, buf, 1);
-	if (len < 1 || char_to_signal_code(buf[0]) != CONN) {
+    char buf;
+	int len = read(fd, &buf, 1);
+	if (len < 1 || char_to_signal_code(buf) != CONN) {
 		return -1;
 	}
     return 0;
+}
+
+void send_ping(int fd) {
+    char code = signal_code_to_char(PING);
+    write(fd, &code, 1);
 }
 
 int read_sub(int fd, std::string &name) {

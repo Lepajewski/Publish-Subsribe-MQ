@@ -18,6 +18,11 @@ int Client::read_connack(int &id) {
     return 0;
 }
 
+void Client::send_ping() {
+    char code = signal_code_to_char(PING);
+    write(this->sock_fd, &code, 1);
+}
+
 void Client::send_sub(std::string name) {
     char code = signal_code_to_char(SUB);
     write(this->sock_fd, &code, 1);

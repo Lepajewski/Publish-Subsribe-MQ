@@ -19,8 +19,8 @@ Szymon Kaczmarek 148056
 - receive messages on a given topic
 - insert message to a topic
 - register new clients
-- every client has unique id (given or randomly generated)
-- ping client after *keepalive* time and no messages were delivered to check if it is still connected
+- every client has unique id
+- ping client after *ping_senconds* time since last action to check if it is still connected
 - send and receive signals from clients
 - messages are not ordered
 - every message is delivered at most once
@@ -41,6 +41,7 @@ Inside given values can be configured:
 - PORT xxxx - broker port
 - MAX_CLIENTS x - maximum amount of clients that can wait for connection accept at the same time
 - VERBOSE (true/false) - if set to true, broker will give additional information in the terminal when running
+- PING_AFTER xxxx - pings client after given full seconds of inactivity
 
 # Signals
 

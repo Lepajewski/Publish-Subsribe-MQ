@@ -17,6 +17,7 @@ void Client::client_thread_body() {
 			break;
 		}
 
+		bool valid_action = true;
 		switch (char_to_signal_code(action_code)) {
 			case SUB: {
 				if (this->handle_sub() < 0) {
@@ -50,14 +51,32 @@ void Client::client_thread_body() {
 				break;
 			}
 
+			case PING: {
+				this->broker->printf_verbose("----------------\n");
+				this->broker->printf_verbose("Received PING from %d\n", this->id);
+				this->broker->printf_verbose("----------------\n");
+				*this->sent_ping = false;
+				break;
+			}
+
 			default: {
 				this->broker->printf_verbose("----------------\n");
 				this->broker->printf_verbose("Received not supported action from %d\n", this->id);
 				this->broker->printf_verbose("----------------\n");
+				valid_action = false;
 				break;
 			}
 		}
+
+		if (valid_action) {
+			this->ping_timestamp = time(nullptr) + this->ping_every_seconds;
+		}
+
+		if (*this->sent_ping && time(nullptr) >= this->ping_wait_timestamp) {
+			*this->should_close = true;
+		}
 	}
+
 
 	this->disconnect();
 

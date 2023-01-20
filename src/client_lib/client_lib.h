@@ -37,6 +37,8 @@ private:
     void send_conn();
     int read_connack(int &id);
 
+    void send_ping();
+
     void send_sub(std::string name);
     int read_suback_success(suback_success_code &success);
     int read_suback_messages(Topic* topic);

@@ -64,6 +64,11 @@ void Client::receiver_thread_body() {
                 break;
             }
 
+            case PING: {
+                this->send_ping();
+                break;
+            }
+
             default: {
                 break;
             }

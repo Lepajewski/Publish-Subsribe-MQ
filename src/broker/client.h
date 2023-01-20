@@ -8,10 +8,13 @@
 #include <stdio.h>
 #include <thread>
 #include <stdarg.h>
+#include <time.h>
 
 #include "broker.h"
 #include "signal_handler.h"
 #include "../utils/config_parser.h"
+
+#define PING_WAIT_TIME 5 //seconds
 
 class Broker;
 
@@ -20,11 +23,15 @@ class Client {
 
     int id;
     int sock_fd;
-    float keepalive;
+    time_t ping_timestamp;
+    time_t ping_every_seconds;
     sockaddr_in client_addr;
     std::thread client_thread;
 
     bool* should_close;
+
+    time_t ping_wait_timestamp;
+    bool* sent_ping;
 
     void client_thread_body();
     int handle_sub();
@@ -33,13 +40,13 @@ class Client {
 
     void disconnect();
 public:
-    Client(Broker* broker, int fd, sockaddr_in addr, float keepalive);
+    Client(Broker* broker, int fd, sockaddr_in addr, time_t ping_every_seconds);
     ~Client();
     int get_id();
     int get_sock_fd();
-    float get_keepalive();
     sockaddr_in get_addr_info();
     bool get_should_close();
+    void time_update();
 };
 
 #endif

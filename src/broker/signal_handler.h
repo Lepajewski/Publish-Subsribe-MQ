@@ -15,6 +15,8 @@ void send_connack(int fd, int id);
 
 int read_conn(int fd);
 
+void send_ping(int fd);
+
 int read_sub(int fd, std::string &name);
 
 void send_suback(int fd, suback_success_code success_code, Topic* topic);

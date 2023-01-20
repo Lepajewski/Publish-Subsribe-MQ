@@ -5,6 +5,7 @@
 #include <string.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <time.h>
 
 enum config_status {
     NOTHING_GIVEN = 0,
@@ -12,7 +13,8 @@ enum config_status {
     PORT_GIVEN = 2,
     VERBOSITY_GIVEN = 4,
     MAX_CLIENTS_GIVEN = 8,
-    FILE_NOT_OPENABLE = 16
+    PING_AFTER_GIVEN = 16,
+    FILE_NOT_OPENABLE = 32
 };
 
 typedef struct Config {
@@ -20,6 +22,7 @@ typedef struct Config {
     in_port_t port;
     bool verbose;
     uint32_t max_clients;
+    time_t ping_after;
 } Config;
 
 Config parse_config(const char *path);
