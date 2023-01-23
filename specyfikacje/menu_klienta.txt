@@ -2,9 +2,9 @@
 > witaj
 > [nazwy zasubskrybowanych topiców]
 > akcje
-> najnowszy błąd z wejścia urzytkownika
-> {wejscie urzytkownika}
-> {poprzednie wejscie urzytkownika}
+> najnowszy błąd z wejścia użytkownika
+> {wejscie użytkownika}
+> {poprzednie wejscie użytkownika}
 
 # WEJŚCIE URZYTKOWNIKA
 komenda w formacie:
