@@ -1,6 +1,9 @@
 #include "client.h"
 
 void Client::send_connack(int id) {
+    char stx = (char)2;
+    write(this->sock_fd, &stx, 1);
+
     char code = signal_code_to_char(CONNACK);
     write(this->sock_fd, &code, 1);
 	write(this->sock_fd, &id, sizeof(id));
@@ -9,6 +12,10 @@ void Client::send_connack(int id) {
 int Client::read_conn() {
     char buf;
 	int len = read(this->sock_fd, &buf, 1);
+	if (len < 1 || buf != (char)2) {
+		return -1;
+	}
+    len = read(this->sock_fd, &buf, 1);
 	if (len < 1 || char_to_signal_code(buf) != CONN) {
 		return -1;
 	}
@@ -16,6 +23,9 @@ int Client::read_conn() {
 }
 
 void Client::send_ping() {
+    char stx = (char)2;
+    write(this->sock_fd, &stx, 1);
+
     char code = signal_code_to_char(PING);
     write(this->sock_fd, &code, 1);
 }
@@ -32,6 +42,9 @@ int Client::read_sub(std::string &name) {
 }
 
 void Client::send_suback(suback_success_code success_code, Topic* topic) {
+    char stx = (char)2;
+    write(this->sock_fd, &stx, 1);
+
     char code = signal_code_to_char(SUBACK);
     write(this->sock_fd, &code, 1);
 
@@ -40,7 +53,7 @@ void Client::send_suback(suback_success_code success_code, Topic* topic) {
     if (success_code == SUBACK_FAILURE) {
         return;
     }
-
+    
     size_t len = topic->get_messages().size();
     write(this->sock_fd, &len, sizeof(len));
     for (Message* m : topic->get_messages()) {
@@ -70,6 +83,9 @@ int Client::read_pub(std::string &topic_name, std::string &message_content) {
 }
 
 void Client::send_puback(int id) {
+    char stx = (char)2;
+    write(this->sock_fd, &stx, 1);
+
     char code = signal_code_to_char(PUBACK);
     write(this->sock_fd, &code, 1);
 
@@ -77,6 +93,9 @@ void Client::send_puback(int id) {
 }
 
 void Client::send_newmes(std::string topic_name, int id, std::string message_content) {
+    char stx = (char)2;
+    write(this->sock_fd, &stx, 1);
+
     char code = signal_code_to_char(NEWMES);
     write(this->sock_fd, &code, 1);
 
@@ -94,6 +113,9 @@ void Client::send_newmes(std::string topic_name, int id, std::string message_con
 }
 
 void Client::send_disconn() {
+    char stx = (char)2;
+    write(this->sock_fd, &stx, 1);
+
     char code = signal_code_to_char(DISCONN);
     write(this->sock_fd, &code, 1);
 }
@@ -110,6 +132,9 @@ int Client::read_unsub(std::string &topic_name) {
 }
 
 void Client::send_unsuback(unsuback_success_code success_code) {
+    char stx = (char)2;
+    write(this->sock_fd, &stx, 1);
+
     char code = signal_code_to_char(UNSUBACK);
     write(this->sock_fd, &code, 1);
 

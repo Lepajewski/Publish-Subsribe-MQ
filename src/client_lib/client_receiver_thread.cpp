@@ -3,7 +3,17 @@
 void Client::receiver_thread_body() {
     char action_code;
 	while (!*this->should_close) {
-		int len = read(this->sock_fd, &action_code, 1);
+        int len = read(this->sock_fd, &action_code, 1);
+        if (len < 1) {
+			*this->should_close = true;
+			break;
+		}
+        if (action_code != (char)02) {
+            flush_sock(this->sock_fd);
+            continue;
+        }
+
+		len = read(this->sock_fd, &action_code, 1);
 		if (len < 1) {
 			*this->should_close = true;
 			break;
@@ -13,8 +23,10 @@ void Client::receiver_thread_body() {
             case SUBACK: {
                 int ret = this->handle_suback();
                 if (ret < 0) {
-                    *this->should_close = true;
                     this->last_error = "Error handling suback";
+                    if (flush_sock(this->sock_fd) < 0) {
+                        *this->should_close = true;
+                    }
                 }
                 else if (ret > 0) {
                     // signalize that main menu should be redrawn (show just subscribed topic) to change
@@ -26,7 +38,9 @@ void Client::receiver_thread_body() {
             case PUBACK: {
                 if (this->handle_puback() < 0) {
                     this->last_error = "Error handling puback";
-                    *this->should_close = true;
+                    if (flush_sock(this->sock_fd) < 0) {
+                        *this->should_close = true;
+                    }
                 }
                 else {
                     // signalize that main menu should be redrawn (show just published message) to change
@@ -38,7 +52,9 @@ void Client::receiver_thread_body() {
             case NEWMES: {
                 if (this->handle_newmes() < 0) {
                     this->last_error = "Error handling newmes";
-                    *this->should_close = true;
+                    if (flush_sock(this->sock_fd) < 0) {
+                        *this->should_close = true;
+                    }
                 }
                 else {
                     // idk what to do here now
@@ -50,7 +66,9 @@ void Client::receiver_thread_body() {
             case UNSUBACK: {
                 if (this->handle_unsuback() < 0) {
                     this->last_error = "Error handling unsuback";
-                    *this->should_close = true;
+                    if (flush_sock(this->sock_fd) < 0) {
+                        *this->should_close = true;
+                    }
                 }
                 else {
                     // signalize that main menu should be redrawn (show just unsubscribed topic) to change

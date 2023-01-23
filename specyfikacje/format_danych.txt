@@ -1,4 +1,5 @@
 kolejność danych w przesyłanych danych:
+0. znak początku (char 02)                                          (char)
 1. nr sygnału (enum sygnałów z brokera)
     sygnały:
 

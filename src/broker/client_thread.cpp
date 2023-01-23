@@ -12,6 +12,16 @@ void Client::client_thread_body() {
 	char action_code;
 	while (!*this->should_close) {
 		int len = read(this->sock_fd, &action_code, 1);
+        if (len < 1) {
+			*this->should_close = true;
+			break;
+		}
+        if (action_code != (char)02) {
+            flush_sock(this->sock_fd);
+            continue;
+        }
+
+		len = read(this->sock_fd, &action_code, 1);
 		if (len < 1) {
 			*this->should_close = true;
 			break;
@@ -21,24 +31,30 @@ void Client::client_thread_body() {
 		switch (char_to_signal_code(action_code)) {
 			case SUB: {
 				if (this->handle_sub() < 0) {
-					fprintf(stderr, "Error with haldling suback from id: %d. Closing connection...\n", this->id);
-					*this->should_close = true;
+					fprintf(stderr, "Error with haldling suback from id: %d.\n", this->id);
+					if (flush_sock(this->sock_fd) < 0) {
+                        *this->should_close = true;
+                    }
 				}
 				break;
 			}
 			
 			case PUB: {
 				if (this->handle_pub() < 0) {
-					fprintf(stderr, "Error with haldling puback from id: %d. Closing connection...\n", this->id);
-					*this->should_close = true;
+					fprintf(stderr, "Error with haldling puback from id: %d.\n", this->id);
+					if (flush_sock(this->sock_fd) < 0) {
+                        *this->should_close = true;
+                    }
 				}
 				break;
 			}
 
 			case UNSUB: {
 				if (this->handle_unsub() < 0) {
-					fprintf(stderr, "Error with haldling unsuback from id: %d. Closing connection...\n", this->id);
-					*this->should_close = true;
+					fprintf(stderr, "Error with haldling unsuback from id: %d.\n", this->id);
+					if (flush_sock(this->sock_fd) < 0) {
+                        *this->should_close = true;
+                    }
 				}
 				break;
 			}

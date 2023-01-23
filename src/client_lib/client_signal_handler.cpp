@@ -1,6 +1,9 @@
 #include "client_lib.h"
 
 void Client::send_conn() {
+    char stx = (char)2;
+    write(this->sock_fd, &stx, 1);
+
     char code = signal_code_to_char(CONN);
     write(this->sock_fd, &code, 1);
 }
@@ -8,6 +11,10 @@ void Client::send_conn() {
 int Client::read_connack(int &id) {
     char buff;
     id = 0;
+    int len = read(this->sock_fd, &buff, 1);
+	if (len < 1 || buff != (char)2) {
+		return -1;
+	}
     int n = read(this->sock_fd, &buff, 1);
     if (n < 1 || char_to_signal_code(buff) != CONNACK ) {
         return -1;
@@ -19,11 +26,17 @@ int Client::read_connack(int &id) {
 }
 
 void Client::send_ping() {
+    char stx = (char)2;
+    write(this->sock_fd, &stx, 1);
+
     char code = signal_code_to_char(PING);
     write(this->sock_fd, &code, 1);
 }
 
 void Client::send_sub(std::string name) {
+    char stx = (char)2;
+    write(this->sock_fd, &stx, 1);
+
     char code = signal_code_to_char(SUB);
     write(this->sock_fd, &code, 1);
     size_t len = name.size();
@@ -32,6 +45,9 @@ void Client::send_sub(std::string name) {
 }
 
 void Client::send_pub(std::string topic_name, std::string message) {
+    char stx = (char)2;
+    write(this->sock_fd, &stx, 1);
+
     char code = signal_code_to_char(PUB);
     write(this->sock_fd, &code, 1);
     size_t len = topic_name.size();
@@ -43,6 +59,9 @@ void Client::send_pub(std::string topic_name, std::string message) {
 }
 
 void Client::send_unsub(std::string topic_name) {
+    char stx = (char)2;
+    write(this->sock_fd, &stx, 1);
+
     char code = signal_code_to_char(UNSUB);
     write(this->sock_fd, &code, 1);
     size_t len = topic_name.size();
@@ -51,6 +70,9 @@ void Client::send_unsub(std::string topic_name) {
 }
 
 void Client::send_disconn() {
+    char stx = (char)2;
+    write(this->sock_fd, &stx, 1);
+
     char code = signal_code_to_char(DISCONN);
     write(this->sock_fd, &code, 1);
 }
@@ -71,7 +93,7 @@ int Client::read_suback_messages(Topic* topic) {
     if (read_type(this->sock_fd, &n, sizeof(n)) < 0) {
         return -1;
     }
-
+    
     for (size_t i = 0; i < n; i++) {
         if (read_type(this->sock_fd, &id, sizeof(id)) < 0) {
             return -1;
