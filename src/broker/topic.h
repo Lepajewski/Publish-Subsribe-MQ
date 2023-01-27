@@ -21,9 +21,9 @@ private:
     int get_new_id();
     int add_message(std::string message);
     void notify_subscribers(Client* client, int id, std::string content);
-public:
     std::mutex message_mutex;
     std::mutex subscribe_mutex;
+public:
 
     Topic(std::string name);
     ~Topic();
