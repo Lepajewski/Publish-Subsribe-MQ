@@ -18,8 +18,6 @@ Client::Client(Broker* broker, int fd, sockaddr_in addr, time_t ping_every_secon
 }
 
 Client::~Client() {
-    printf("POLAKI CEBULAKI %d\n", this->id);
-
     *this->should_close = true;
     this->disconnect();
     if (this->client_thread.joinable()) {
