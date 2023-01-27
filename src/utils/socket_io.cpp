@@ -13,7 +13,7 @@ int read_type(int fd, void* buf, size_t size) {
 }
 
 int read_string(int fd, std::string &str, size_t size) {
-    char* name_c = new char[size];
+    char* name_c = new char[size + 1] {0};
     if (read_type(fd, name_c, size) < 0) {
         delete name_c;
         return -1;
